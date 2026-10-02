@@ -12,16 +12,18 @@ import 'api_client.dart';
 ///  - [ApiSuccess]: data + server ka message + status code
 ///  - [ApiFailure]: [Failure] (server ka message + status code + field errors)
 ///
-/// Example (repo mein):
+/// Do tarah ke parser:
+///  - `parser`: sirf `data` key ka hissa milta hai (login, single object)
+///  - `bodyParser`: POORI body milti hai, jab `data` ke bahar bhi kuch chahiye
+///    (jaise list ke saath `pagination`). `bodyParser` ho to wahi chalta hai.
+///
+/// Example:
 /// ```dart
-/// Future<ApiResult<LoginResponse>> login(String phone, String password) {
-///   return _api.post<LoginResponse>(
-///     ApiUrls.login,
-///     body: {'phone': phone, 'password': password},
-///     requiresAuth: false,
-///     parser: (data) => LoginResponse.fromJson(data as Map<String, dynamic>),
-///   );
-/// }
+/// _api.get<PosOrderPage>(
+///   ApiUrls.posOrderHistory,
+///   queryParameters: {'page': 1, 'limit': 20},
+///   bodyParser: (body) => PosOrderPage.fromJson(body as Map<String, dynamic>),
+/// );
 /// ```
 class ApiService {
   const ApiService(this._client);
@@ -37,6 +39,7 @@ class ApiService {
         bool requiresAuth = true,
         CancelToken? cancelToken,
         T Function(dynamic data)? parser,
+        T Function(dynamic body)? bodyParser,
       }) {
     return _run<T>(
           () => _client.get(
@@ -46,6 +49,7 @@ class ApiService {
         cancelToken: cancelToken,
       ),
       parser,
+      bodyParser,
     );
   }
 
@@ -56,6 +60,7 @@ class ApiService {
         bool requiresAuth = true,
         CancelToken? cancelToken,
         T Function(dynamic data)? parser,
+        T Function(dynamic body)? bodyParser,
       }) {
     return _run<T>(
           () => _client.post(
@@ -66,6 +71,7 @@ class ApiService {
         cancelToken: cancelToken,
       ),
       parser,
+      bodyParser,
     );
   }
 
@@ -76,6 +82,7 @@ class ApiService {
         bool requiresAuth = true,
         CancelToken? cancelToken,
         T Function(dynamic data)? parser,
+        T Function(dynamic body)? bodyParser,
       }) {
     return _run<T>(
           () => _client.put(
@@ -86,6 +93,7 @@ class ApiService {
         cancelToken: cancelToken,
       ),
       parser,
+      bodyParser,
     );
   }
 
@@ -96,6 +104,7 @@ class ApiService {
         bool requiresAuth = true,
         CancelToken? cancelToken,
         T Function(dynamic data)? parser,
+        T Function(dynamic body)? bodyParser,
       }) {
     return _run<T>(
           () => _client.patch(
@@ -106,6 +115,7 @@ class ApiService {
         cancelToken: cancelToken,
       ),
       parser,
+      bodyParser,
     );
   }
 
@@ -116,6 +126,7 @@ class ApiService {
         bool requiresAuth = true,
         CancelToken? cancelToken,
         T Function(dynamic data)? parser,
+        T Function(dynamic body)? bodyParser,
       }) {
     return _run<T>(
           () => _client.delete(
@@ -126,16 +137,22 @@ class ApiService {
         cancelToken: cancelToken,
       ),
       parser,
+      bodyParser,
     );
   }
 
   Future<ApiResult<T>> _run<T>(
       Future<ApiResponse> Function() call,
       T Function(dynamic data)? parser,
+      T Function(dynamic body)? bodyParser,
       ) async {
     try {
       final ApiResponse res = await call();
-      final T data = parser != null ? parser(res.data) : res.data as T;
+      final T data = bodyParser != null
+          ? bodyParser(res.body)
+          : parser != null
+          ? parser(res.data)
+          : res.data as T;
       return ApiSuccess<T>(
         data: data,
         message: res.message,

@@ -37,7 +37,7 @@ class AppRadius {
 class AppSizes {
   AppSizes._();
 
-  static const double buttonLarge = 56;
+  static const double buttonLarge = 50;
   static const double buttonMedium = 48;
   static const double buttonSmall = 40;
   static const double input = 56;

@@ -24,14 +24,14 @@ class ApiUrls {
   static const String quickCreateCustomer = '/pos/customers/quick'; // ⚠️ verify
 
   // ── POS: products & orders ───────────────────────────────────────────────
-  static const String posProducts = '/pos/products'; // ⚠️ verify
+  static const String posProducts = '/products/pos/search'; // ⚠️ verify
   static const String createPosOrder = '/pos/orders'; // ⚠️ verify
-  static const String posOrderHistory = '/pos/orders/history'; // ⚠️ verify
+  static const String posOrderHistory = '/orders/pos/history'; // ⚠️ verify
   static String orderReceipt(String orderId) => '/pos/orders/$orderId/receipt'; // ⚠️ verify
 
   // ── POS: held orders ─────────────────────────────────────────────────────
-  static const String holdOrder = '/pos/orders/hold'; // ⚠️ verify
-  static const String heldOrders = '/pos/orders/held'; // ⚠️ verify
+  static const String holdOrder = '/pos/orders/hold';
+  static const String heldOrders = '/pos/orders/held';
   static String heldOrderById(String id) => '/pos/orders/held/$id'; // ⚠️ verify
   static String resumeHeldOrder(String id) => '/pos/orders/held/$id/resume'; // ⚠️ verify
   static String cancelHeldOrder(String id) => '/pos/orders/held/$id'; // ⚠️ verify (DELETE)
@@ -43,9 +43,7 @@ class ApiUrls {
   static String closeShift(String id) => '/pos/shifts/$id/close'; // ⚠️ verify (PATCH)
 
   // ── Reports ──────────────────────────────────────────────────────────────
-  static const String dailySalesReport = '/pos/reports/daily-sales'; // ⚠️ verify
-
-  // ── Roles & permissions ──────────────────────────────────────────────────
+  static const String dailySalesReport = '/pos/reports/sales/daily';
   static const String allPermissions = '/permissions'; // ⚠️ verify
   static String permissionsByRole(String role) => '/permissions/role/$role'; // ⚠️ verify
   static const String assignPermission = '/permissions/assign'; // ⚠️ verify

@@ -3,8 +3,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../core/constants/storage_keys.dart';
 
-/// Tokens secure storage mein jate hain (Keystore / Keychain).
-/// Har API call pe disk read na ho isliye memory cache bhi hai.
+/// Tokens + logged-in user secure storage mein jate hain (Keystore / Keychain).
+/// Har API call pe disk read na ho isliye tokens ka memory cache bhi hai.
+///
+/// Ye service model ko nahi jaanti: user ko JSON string ke roop mein store karti hai.
 class StorageService {
   StorageService({FlutterSecureStorage? secure})
       : _secure = secure ?? const FlutterSecureStorage();
@@ -60,6 +62,42 @@ class StorageService {
     await _secure.delete(key: StorageKeys.refreshToken);
   }
 
+  // ── Session (tokens + user) ──────────────────────────────────────────────
+
+  /// Login success pe ek saath save.
+  Future<void> saveSession({
+    required String accessToken,
+    required String refreshToken,
+    required String userJson,
+  }) async {
+    await saveTokens(accessToken: accessToken, refreshToken: refreshToken);
+    await _secure.write(key: StorageKeys.user, value: userJson);
+  }
+
+  Future<String?> getUserJson() => _secure.read(key: StorageKeys.user);
+
+  Future<void> saveUserJson(String userJson) =>
+      _secure.write(key: StorageKeys.user, value: userJson);
+
+  /// Logout / session expiry pe: tokens, user, active shift sab saaf.
+  /// Remembered phone aur device settings bachi rehti hain.
+  Future<void> clearSession() async {
+    await clearTokens();
+    await _secure.delete(key: StorageKeys.user);
+    await _secure.delete(key: StorageKeys.activeShiftId);
+  }
+
+  // ── Remember me (sirf phone number, password kabhi nahi) ─────────────────
+
+  Future<String?> getRememberedPhone() =>
+      _secure.read(key: StorageKeys.rememberedPhone);
+
+  Future<void> saveRememberedPhone(String phone) =>
+      _secure.write(key: StorageKeys.rememberedPhone, value: phone);
+
+  Future<void> clearRememberedPhone() =>
+      _secure.delete(key: StorageKeys.rememberedPhone);
+
   // ── Generic key-value ────────────────────────────────────────────────────
 
   Future<void> write(String key, String value) =>
@@ -69,7 +107,7 @@ class StorageService {
 
   Future<void> delete(String key) => _secure.delete(key: key);
 
-  /// Logout pe sab kuch saaf.
+  /// Poora reset (settings ya app data clear).
   Future<void> clearAll() async {
     _accessCache = null;
     _refreshCache = null;

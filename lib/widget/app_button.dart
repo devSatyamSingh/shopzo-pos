@@ -52,9 +52,9 @@ class AppButton extends StatelessWidget {
       case AppButtonSize.large:
         return const _ButtonDims(
           height: AppSizes.buttonLarge,
-          fontSize: 16,
-          iconSize: 22,
-          horizontalPadding: 24,
+          fontSize: 15,
+          iconSize: 20,
+          horizontalPadding: 22,
           radius: 16,
         );
       case AppButtonSize.medium:

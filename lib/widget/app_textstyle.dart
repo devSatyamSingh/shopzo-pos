@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Saare text styles ek jagah. Inme color nahi hai, color theme / AppText se aata hai.
 class AppTextStyles {
   AppTextStyles._();
 
@@ -25,21 +24,21 @@ class AppTextStyles {
 
   /// Big dashboard numbers (Net Sales)
   static TextStyle get hero =>
-      _style(36, FontWeight.w800, height: 1.1, letterSpacing: -1, tabular: true);
+      _style(36, FontWeight.w600, height: 1.1, letterSpacing: -1, tabular: true);
 
   static TextStyle get display =>
-      _style(28, FontWeight.w800, height: 1.2, letterSpacing: -0.5);
+      _style(19, FontWeight.w600, height: 1.2, letterSpacing: -0.5);
 
   static TextStyle get h1 =>
       _style(24, FontWeight.w700, height: 1.25, letterSpacing: -0.3);
 
-  static TextStyle get h2 => _style(20, FontWeight.w700, height: 1.3);
+  static TextStyle get h2 => _style(18, FontWeight.w700, height: 1.3);
 
   static TextStyle get title => _style(16, FontWeight.w600, height: 1.4);
 
-  static TextStyle get bodyLarge => _style(16, FontWeight.w500, height: 1.5);
+  static TextStyle get bodyLarge => _style(13, FontWeight.w500, height: 1.5);
 
-  static TextStyle get body => _style(14, FontWeight.w500, height: 1.5);
+  static TextStyle get body => _style(12, FontWeight.w500, height: 1.5);
 
   static TextStyle get bodyBold => _style(14, FontWeight.w700, height: 1.5);
 
