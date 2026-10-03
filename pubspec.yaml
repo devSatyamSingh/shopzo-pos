@@ -31,6 +31,7 @@ dependencies:
   shimmer: ^3.0.0
   pretty_dio_logger: ^1.4.0
   fl_chart: ^1.2.0
+  printing: ^5.14.3
 
 dev_dependencies:
   flutter_test:

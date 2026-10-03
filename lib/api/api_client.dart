@@ -1,19 +1,15 @@
 import 'dart:async';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../core/constants/app_constants.dart';
 import '../core/network/api_exceptions.dart';
 import '../service/storage_service.dart';
 import 'api_urls.dart';
 
-// Request ke `extra` mein ye flags jate hain.
 const String _kRequiresAuth = 'requiresAuth';
 const String _kAuthRetried = 'authRetried';
 
-/// Server response ka clean wrapper.
 class ApiResponse {
   const ApiResponse({
     required this.statusCode,
@@ -22,14 +18,9 @@ class ApiResponse {
   });
 
   final int statusCode;
-
-  /// Poori raw body.
   final dynamic body;
-
-  /// Server ka `message` (agar hai).
   final String? message;
 
-  /// `data` key ke andar ka part. Agar `data` key nahi hai to poori body.
   dynamic get data {
     final dynamic b = body;
     if (b is Map && b.containsKey('data')) return b['data'];
@@ -51,15 +42,10 @@ class ApiResponse {
   }
 }
 
-/// Saari HTTP calls yahin se hoti hain.
-///
-/// - Token automatically attach hota hai
-/// - 401 pe refresh token se naya token leke request dobara chalti hai
-/// - Parallel 401 pe refresh sirf ek baar hota hai
-/// - Har error [ApiException] ban ke aata hai (server ka message ke saath)
+
 class ApiClient {
   ApiClient({required StorageService storage, String? baseUrl})
-      : _storage = storage {
+    : _storage = storage {
     final BaseOptions options = BaseOptions(
       baseUrl: baseUrl ?? ApiUrls.baseUrl,
       connectTimeout: AppConstants.connectTimeout,
@@ -71,9 +57,7 @@ class ApiClient {
     );
 
     _dio = Dio(options);
-    // Interceptor-free Dio: token refresh aur retry ke liye (loop se bachne ko).
     _plainDio = Dio(options.copyWith());
-
     _dio.interceptors.add(
       _AuthInterceptor(
         storage: _storage,
@@ -89,10 +73,8 @@ class ApiClient {
   late final Dio _plainDio;
 
   final StreamController<void> _sessionController =
-  StreamController<void>.broadcast();
+      StreamController<void>.broadcast();
 
-  /// Refresh token fail ho gaya, user ko login pe bhejo.
-  /// AuthNotifier isse listen karke logout + redirect karega.
   Stream<void> get onSessionExpired => _sessionController.stream;
 
   void _emitSessionExpired() {
@@ -105,15 +87,14 @@ class ApiClient {
     _plainDio.close();
   }
 
-  // ── Public methods ───────────────────────────────────────────────────────
 
   Future<ApiResponse> get(
-      String path, {
-        Map<String, dynamic>? queryParameters,
-        bool requiresAuth = true,
-        CancelToken? cancelToken,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    bool requiresAuth = true,
+    CancelToken? cancelToken,
+    Map<String, String>? headers,
+  }) {
     return _send(
       'GET',
       path,
@@ -125,13 +106,13 @@ class ApiClient {
   }
 
   Future<ApiResponse> post(
-      String path, {
-        Object? body,
-        Map<String, dynamic>? queryParameters,
-        bool requiresAuth = true,
-        CancelToken? cancelToken,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    bool requiresAuth = true,
+    CancelToken? cancelToken,
+    Map<String, String>? headers,
+  }) {
     return _send(
       'POST',
       path,
@@ -144,13 +125,13 @@ class ApiClient {
   }
 
   Future<ApiResponse> put(
-      String path, {
-        Object? body,
-        Map<String, dynamic>? queryParameters,
-        bool requiresAuth = true,
-        CancelToken? cancelToken,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    bool requiresAuth = true,
+    CancelToken? cancelToken,
+    Map<String, String>? headers,
+  }) {
     return _send(
       'PUT',
       path,
@@ -163,13 +144,13 @@ class ApiClient {
   }
 
   Future<ApiResponse> patch(
-      String path, {
-        Object? body,
-        Map<String, dynamic>? queryParameters,
-        bool requiresAuth = true,
-        CancelToken? cancelToken,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    bool requiresAuth = true,
+    CancelToken? cancelToken,
+    Map<String, String>? headers,
+  }) {
     return _send(
       'PATCH',
       path,
@@ -182,13 +163,13 @@ class ApiClient {
   }
 
   Future<ApiResponse> delete(
-      String path, {
-        Object? body,
-        Map<String, dynamic>? queryParameters,
-        bool requiresAuth = true,
-        CancelToken? cancelToken,
-        Map<String, String>? headers,
-      }) {
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    bool requiresAuth = true,
+    CancelToken? cancelToken,
+    Map<String, String>? headers,
+  }) {
     return _send(
       'DELETE',
       path,
@@ -200,17 +181,16 @@ class ApiClient {
     );
   }
 
-  // ── Core ─────────────────────────────────────────────────────────────────
 
   Future<ApiResponse> _send(
-      String method,
-      String path, {
-        Object? body,
-        Map<String, dynamic>? queryParameters,
-        required bool requiresAuth,
-        CancelToken? cancelToken,
-        Map<String, String>? headers,
-      }) async {
+    String method,
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    required bool requiresAuth,
+    CancelToken? cancelToken,
+    Map<String, String>? headers,
+  }) async {
     try {
       final Response<dynamic> response = await _dio.request<dynamic>(
         path,
@@ -224,12 +204,10 @@ class ApiClient {
         ),
       );
 
-      // Kuch backends 200 ke saath {"success": false, "message": "..."} bhejte hain.
       final dynamic data = response.data;
       if (data is Map && data['success'] == false) {
         throw ApiException.fromBody(data, statusCode: response.statusCode);
       }
-
       return ApiResponse.fromResponse(response);
     } on ApiException {
       rethrow;
@@ -242,14 +220,13 @@ class ApiClient {
 }
 
 final Provider<ApiClient> apiClientProvider = Provider<ApiClient>((Ref ref) {
-  final ApiClient client = ApiClient(storage: ref.watch(storageServiceProvider));
+  final ApiClient client = ApiClient(
+    storage: ref.watch(storageServiceProvider),
+  );
   ref.onDispose(client.dispose);
   return client;
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Auth interceptor: token attach + 401 pe refresh + retry
-// ═══════════════════════════════════════════════════════════════════════════
 
 enum _RefreshOutcome { success, rejected, failed }
 
@@ -275,9 +252,9 @@ class _AuthInterceptor extends QueuedInterceptor {
 
   @override
   Future<void> onRequest(
-      RequestOptions options,
-      RequestInterceptorHandler handler,
-      ) async {
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     if (options.extra[_kRequiresAuth] != false) {
       final String? token = await storage.getAccessToken();
       if (token != null && token.isNotEmpty) {
@@ -289,9 +266,9 @@ class _AuthInterceptor extends QueuedInterceptor {
 
   @override
   Future<void> onError(
-      DioException err,
-      ErrorInterceptorHandler handler,
-      ) async {
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     final RequestOptions options = err.requestOptions;
     final bool requiresAuth = options.extra[_kRequiresAuth] != false;
     final bool alreadyRetried = options.extra[_kAuthRetried] == true;
@@ -319,7 +296,6 @@ class _AuthInterceptor extends QueuedInterceptor {
         return handler.next(err);
       }
       if (outcome == _RefreshOutcome.failed) {
-        // Network issue tha, user ko logout mat karo.
         return handler.next(err);
       }
     }
@@ -328,8 +304,9 @@ class _AuthInterceptor extends QueuedInterceptor {
       final String? newToken = await storage.getAccessToken();
       options.headers['Authorization'] = 'Bearer $newToken';
       options.extra[_kAuthRetried] = true;
-      final Response<dynamic> retryResponse =
-      await plainDio.fetch<dynamic>(options);
+      final Response<dynamic> retryResponse = await plainDio.fetch<dynamic>(
+        options,
+      );
       return handler.resolve(retryResponse);
     } on DioException catch (retryError) {
       return handler.next(retryError);
@@ -370,7 +347,10 @@ class _AuthInterceptor extends QueuedInterceptor {
     final dynamic refresh = data['refreshToken'] ?? data['refresh_token'];
     if (access is! String || access.isEmpty) return null;
 
-    return _Tokens(access, refresh is String && refresh.isNotEmpty ? refresh : null);
+    return _Tokens(
+      access,
+      refresh is String && refresh.isNotEmpty ? refresh : null,
+    );
   }
 
   Future<void> _expire() async {
@@ -379,9 +359,6 @@ class _AuthInterceptor extends QueuedInterceptor {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Debug logger (release build mein add hi nahi hota)
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _LogInterceptor extends Interceptor {
   static const Set<String> _secretKeys = <String>{
@@ -401,8 +378,11 @@ class _LogInterceptor extends Interceptor {
   }
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
-    debugPrint('✅ ${response.statusCode} ${response.requestOptions.uri}');
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
+    debugPrint('${response.statusCode} ${response.requestOptions.uri}');
     debugPrint('    ${_short(_redact(response.data))}');
     handler.next(response);
   }
@@ -410,7 +390,7 @@ class _LogInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     debugPrint(
-      '❌ ${err.response?.statusCode ?? err.type.name} ${err.requestOptions.uri}',
+      '${err.response?.statusCode ?? err.type.name} ${err.requestOptions.uri}',
     );
     if (err.response?.data != null) {
       debugPrint('    ${_short(_redact(err.response?.data))}');

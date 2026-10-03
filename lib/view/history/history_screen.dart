@@ -9,14 +9,11 @@ import 'package:shopzo_pos/widget/app_dimens.dart';
 import 'package:shopzo_pos/widget/app_error_view.dart';
 import 'package:shopzo_pos/widget/app_text.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
-import '../../utils/responsive.dart';
-import '../../widget/app_textfield.dart';
-import '../model/pos_history_model.dart';
-import '../viewmodel/pos_history_viewmodel.dart';
+import '../../../utils/responsive.dart';
+import '../../../widget/app_textfield.dart';
+import '../../model/pos_history_model.dart';
+import '../../viewmodel/pos_history_viewmodel.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// UI helpers (colors / icons). Model me UI nahi, isliye yahan extension.
-// ═══════════════════════════════════════════════════════════════════════════
 
 const Color _amberText = Color(0xFFE08A00);
 const Color _skyText = Color(0xFF0E9FC4);
@@ -127,9 +124,6 @@ SliverGridDelegateWithMaxCrossAxisExtent(
   crossAxisSpacing: 14,
 );
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Screen
-// ═══════════════════════════════════════════════════════════════════════════
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
@@ -155,7 +149,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     super.dispose();
   }
 
-  /// Neeche se 320px pehle hi agla page mangwa lo, user ko wait na dikhe.
   void _onScroll() {
     if (!_scroll.hasClients) return;
     final ScrollPosition p = _scroll.position;
@@ -167,7 +160,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   Future<void> _onRefresh() async {
     final ApiResult<PosOrderPage> result =
     await ref.read(orderHistoryViewModelProvider.notifier).refresh();
-    // Fail hua to server ka message bubble mein, purani list screen par rahegi.
     if (result is ApiFailure<PosOrderPage>) {
       AppUtils.showFailure(result.failure);
     }
@@ -199,7 +191,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               onRefresh: _onRefresh,
               child: visible.isEmpty
                   ? _EmptyView(
-                // Filter lagne se khali dikhe par aur pages baaki ho sakte hain.
                 canLoadMore: s.hasMore,
                 isLoadingMore: s.isLoadingMore,
                 onLoadMore: vm.loadMore,
@@ -243,14 +234,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const AppText.h1('Order History'),
-                      const SizedBox(height: 2),
-                      AppText.body(
-                        firstLoad
-                            ? 'Loading orders…'
-                            : '${s.total > 0 ? s.total : s.orders.length} orders',
-                        secondary: true,
-                      ),
+                      AppText.h1('Order History',),
                       const SizedBox(height: 16),
                       AppTextField.search(
                         controller: _search,

@@ -24,13 +24,13 @@ class AppTextStyles {
 
   /// Big dashboard numbers (Net Sales)
   static TextStyle get hero =>
-      _style(36, FontWeight.w600, height: 1.1, letterSpacing: -1, tabular: true);
+      _style(30, FontWeight.w600, height: 1.1, letterSpacing: -1, tabular: true);
 
   static TextStyle get display =>
-      _style(19, FontWeight.w600, height: 1.2, letterSpacing: -0.5);
+      _style(17, FontWeight.w600, height: 1.2, letterSpacing: -0.5);
 
   static TextStyle get h1 =>
-      _style(24, FontWeight.w700, height: 1.25, letterSpacing: -0.3);
+      _style(18, FontWeight.w600, height: 1.25, letterSpacing: -0.3);
 
   static TextStyle get h2 => _style(18, FontWeight.w700, height: 1.3);
 

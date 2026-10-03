@@ -1,5 +1,3 @@
-/// Order ka status. Naya status aaye to `unknown` banega aur original string
-/// [PosOrder.statusName] mein rahegi (app crash nahi hogi).
 enum OrderStatus {
   completed,
   pending,
@@ -83,14 +81,9 @@ class OrderPayment {
   });
 
   final PayMethod method;
-
-  /// Server se aayi original string, jaise "CASH".
   final String methodName;
   final double amount;
-
-  /// Known method ka label, warna server wali string title-case mein.
-  String get label =>
-      method == PayMethod.other ? _titleCase(methodName) : method.label;
+  String get label => method == PayMethod.other ? _titleCase(methodName) : method.label;
 
   factory OrderPayment.fromJson(Map<String, dynamic> json) {
     final String name = _str(json['method']) ?? '';
@@ -102,7 +95,6 @@ class OrderPayment {
   }
 }
 
-/// History list ka ek order.
 class PosOrder {
   const PosOrder({
     required this.id,
@@ -128,13 +120,10 @@ class PosOrder {
   final double total;
   final DateTime? createdAt;
 
-  /// Ek order mein 2+ payment modes (jaise Cash + UPI).
   bool get isSplit => payments.length > 1;
 
-  PayMethod? get primaryMethod =>
-      payments.isEmpty ? null : payments.first.method;
+  PayMethod? get primaryMethod => payments.isEmpty ? null : payments.first.method;
 
-  /// "UPI" ya split ho to "Cash + UPI".
   String get paymentLabel {
     if (payments.isEmpty) return '—';
     final List<String> labels = <String>[];
@@ -144,7 +133,6 @@ class PosOrder {
     return labels.join(' + ');
   }
 
-  /// Unknown status ho to server wali string dikhao.
   String get statusLabel =>
       status == OrderStatus.unknown && statusName.isNotEmpty
           ? _titleCase(statusName)
@@ -202,7 +190,6 @@ class PageInfo {
   }
 }
 
-/// Poori response body: `{ "data": [...], "pagination": {...} }`
 class PosOrderPage {
   const PosOrderPage({required this.items, required this.pageInfo});
 
@@ -235,15 +222,12 @@ class PosOrderPage {
   }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
 String? _str(dynamic value) {
   if (value == null) return null;
   final String s = value.toString();
   return s.isEmpty ? null : s;
 }
 
-/// int, double ya "599.00" string, sab chalta hai.
 double _double(dynamic value) {
   if (value is num) return value.toDouble();
   if (value is String) return double.tryParse(value) ?? 0;

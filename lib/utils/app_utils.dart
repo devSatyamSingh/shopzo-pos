@@ -11,17 +11,6 @@ import '../widget/app_colors.dart';
 
 enum MessageType { success, error, warning, info }
 
-/// Common helpers + animated message bubble.
-///
-/// Message bubble bina BuildContext ke kahin se bhi dikha sakte ho
-/// (viewmodel, notifier, repo ke baad). Bas `navigatorKey` MaterialApp /
-/// GoRouter mein lagana zaroori hai.
-///
-/// ```dart
-/// AppUtils.showSuccess('Order placed');
-/// AppUtils.showFailure(failure);          // server ka exact message + status code
-/// AppUtils.showResult(result);            // success/failure dono automatic
-/// ```
 class AppUtils {
   AppUtils._();
 
@@ -29,20 +18,16 @@ class AppUtils {
   static String? _lastKey;
   static DateTime? _lastShownAt;
 
-  // ── Keyboard ─────────────────────────────────────────────────────────────
-
   static void hideKeyboard() {
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
-  // ── Message shortcuts ────────────────────────────────────────────────────
-
   static void showSuccess(
-      String message, {
-        String? title,
-        int? statusCode,
-        Duration? duration,
-      }) {
+    String message, {
+    String? title,
+    int? statusCode,
+    Duration? duration,
+  }) {
     showMessage(
       message,
       type: MessageType.success,
@@ -53,11 +38,11 @@ class AppUtils {
   }
 
   static void showError(
-      String message, {
-        String? title,
-        int? statusCode,
-        Duration? duration,
-      }) {
+    String message, {
+    String? title,
+    int? statusCode,
+    Duration? duration,
+  }) {
     showMessage(
       message,
       type: MessageType.error,
@@ -68,11 +53,11 @@ class AppUtils {
   }
 
   static void showWarning(
-      String message, {
-        String? title,
-        int? statusCode,
-        Duration? duration,
-      }) {
+    String message, {
+    String? title,
+    int? statusCode,
+    Duration? duration,
+  }) {
     showMessage(
       message,
       type: MessageType.warning,
@@ -83,11 +68,11 @@ class AppUtils {
   }
 
   static void showInfo(
-      String message, {
-        String? title,
-        int? statusCode,
-        Duration? duration,
-      }) {
+    String message, {
+    String? title,
+    int? statusCode,
+    Duration? duration,
+  }) {
     showMessage(
       message,
       type: MessageType.info,
@@ -97,9 +82,9 @@ class AppUtils {
     );
   }
 
-  /// API ka [Failure] dikhata hai: server ka wahi message + status code chip.
   static void showFailure(Failure failure, {String? title}) {
-    final bool soft = failure.type == FailureType.noInternet ||
+    final bool soft =
+        failure.type == FailureType.noInternet ||
         failure.type == FailureType.timeout;
     showMessage(
       failure.message,
@@ -109,14 +94,11 @@ class AppUtils {
     );
   }
 
-  /// [ApiResult] ko seedha dikhata hai.
-  /// Success mein server ka `message` dikhega (agar bheja ho), warna [successFallback].
-  /// GET/list calls pe `showOnSuccess: false` do, taaki har load pe bubble na aaye.
   static void showResult<T>(
-      ApiResult<T> result, {
-        bool showOnSuccess = true,
-        String? successFallback,
-      }) {
+    ApiResult<T> result, {
+    bool showOnSuccess = true,
+    String? successFallback,
+  }) {
     if (result is ApiSuccess<T>) {
       if (!showOnSuccess) return;
       final String? msg = (result.message != null && result.message!.isNotEmpty)
@@ -130,19 +112,16 @@ class AppUtils {
     }
   }
 
-  // ── Core ─────────────────────────────────────────────────────────────────
-
   static void showMessage(
-      String message, {
-        MessageType type = MessageType.info,
-        String? title,
-        int? statusCode,
-        Duration? duration,
-      }) {
+    String message, {
+    MessageType type = MessageType.info,
+    String? title,
+    int? statusCode,
+    Duration? duration,
+  }) {
     final String text = message.trim();
     if (text.isEmpty) return;
 
-    // Same message 800ms ke andar dobara aaye to ignore (double tap / retry spam).
     final String key = '${type.name}|$statusCode|$text';
     final DateTime now = DateTime.now();
     if (_entry != null &&
@@ -157,7 +136,7 @@ class AppUtils {
     void insert() {
       final OverlayState? overlay = navigatorKey.currentState?.overlay;
       if (overlay == null) {
-        debugPrint('[AppUtils] Overlay ready nahi hai, message: $text');
+        debugPrint('[AppUtils] Overlay not ready, message: $text');
         return;
       }
       _removeNow();
@@ -177,7 +156,6 @@ class AppUtils {
       overlay.insert(entry);
     }
 
-    // Build phase ke dauran overlay.insert karna crash karta hai.
     if (SchedulerBinding.instance.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
       WidgetsBinding.instance.addPostFrameCallback((_) => insert());
@@ -229,10 +207,6 @@ class AppUtils {
     }
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Message bubble UI
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _BubbleStyle {
   const _BubbleStyle({
@@ -321,8 +295,8 @@ class _MessageBubbleState extends State<_MessageBubble>
 
     _enter = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 520),
-      reverseDuration: const Duration(milliseconds: 260),
+      duration: const Duration(milliseconds: 480),
+      reverseDuration: const Duration(milliseconds: 240),
     );
     _progress = AnimationController(vsync: this, duration: widget.duration)
       ..addStatusListener((AnimationStatus status) {
@@ -330,27 +304,26 @@ class _MessageBubbleState extends State<_MessageBubble>
       });
     _shake = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 520),
+      duration: const Duration(milliseconds: 490),
     );
 
-    _slide = Tween<Offset>(
-      begin: const Offset(0, -1.4),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _enter,
-        curve: Curves.easeOutBack,
-        reverseCurve: Curves.easeInCubic,
-      ),
-    );
+    _slide = Tween<Offset>(begin: const Offset(0, -1.4), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _enter,
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInCubic,
+          ),
+        );
     _fade = CurvedAnimation(
       parent: _enter,
       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
       reverseCurve: Curves.easeIn,
     );
-    _scale = Tween<double>(begin: 0.92, end: 1.0).animate(
-      CurvedAnimation(parent: _enter, curve: Curves.easeOutCubic),
-    );
+    _scale = Tween<double>(
+      begin: 0.92,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _enter, curve: Curves.easeOutCubic));
     _iconPop = CurvedAnimation(
       parent: _enter,
       curve: const Interval(0.3, 1.0, curve: Curves.elasticOut),
@@ -565,7 +538,8 @@ class _MessageBubbleState extends State<_MessageBubble>
                       animation: _shake,
                       builder: (BuildContext context, Widget? child) {
                         final double t = _shake.value;
-                        final double dx = math.sin(t * math.pi * 6) * (1 - t) * 8;
+                        final double dx =
+                            math.sin(t * math.pi * 6) * (1 - t) * 8;
                         return Transform.translate(
                           offset: Offset(dx, 0),
                           child: child,

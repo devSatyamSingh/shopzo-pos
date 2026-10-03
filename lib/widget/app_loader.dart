@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_text.dart';
 
-/// Chhota spinner. Inline use ke liye (list ke neeche "load more", etc.)
 class AppLoader extends StatelessWidget {
   const AppLoader({
     super.key,
@@ -32,11 +31,6 @@ class AppLoader extends StatelessWidget {
   }
 }
 
-/// Poori screen ka loader (first data load pe).
-///
-/// ```dart
-/// state.when(loading: () => const AppFullScreenLoader(message: 'Loading products...'), ...)
-/// ```
 class AppFullScreenLoader extends StatelessWidget {
   const AppFullScreenLoader({super.key, this.message});
 
@@ -59,12 +53,6 @@ class AppFullScreenLoader extends StatelessWidget {
   }
 }
 
-/// Kisi bhi screen ke upar blocking loader (Pay Now, Close Shift, Login).
-/// Loading ke dauran taps block ho jaate hain.
-///
-/// ```dart
-/// AppLoadingOverlay(isLoading: state.isSubmitting, message: 'Placing order...', child: Scaffold(...))
-/// ```
 class AppLoadingOverlay extends StatelessWidget {
   const AppLoadingOverlay({
     super.key,
@@ -133,13 +121,6 @@ class AppLoadingOverlay extends StatelessWidget {
   }
 }
 
-/// Shimmer skeleton (placeholder jab tak data aa raha hai). Extra package nahi chahiye.
-///
-/// ```dart
-/// const AppSkeleton(height: 96, radius: 20)               // KPI card
-/// const AppSkeleton(width: 140, height: 14)               // text line
-/// const AppSkeleton.circle(size: 44)                      // avatar
-/// ```
 class AppSkeleton extends StatefulWidget {
   const AppSkeleton({
     super.key,

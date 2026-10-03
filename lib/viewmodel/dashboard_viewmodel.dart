@@ -8,10 +8,6 @@ import 'package:shopzo_pos/utils/app_utils.dart';
 
 import '../repo/dashbaord_repo.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Period
-// ═══════════════════════════════════════════════════════════════════════════
-
 class DateRange {
   const DateRange(this.from, this.to);
   final DateTime from;
@@ -35,7 +31,6 @@ enum DashboardPeriod {
   static DateTime _day(DateTime base, int offset) =>
       DateTime(base.year, base.month, base.day + offset);
 
-  /// Selected period ki date range.
   DateRange current([DateTime? now]) {
     final DateTime t = _day(now ?? DateTime.now(), 0);
     switch (this) {
@@ -50,7 +45,6 @@ enum DashboardPeriod {
     }
   }
 
-  /// Growth nikalne ke liye us se pehle ki barabar range.
   DateRange previous([DateTime? now]) {
     final DateTime t = _day(now ?? DateTime.now(), 0);
     switch (this) {
@@ -68,14 +62,10 @@ enum DashboardPeriod {
     }
   }
 
-  /// Sparkline ke buckets (max 8). "Today" ek hi din hai, isliye uska chart
-  /// pichhle 7 din ka trend dikhata hai.
   List<DateRange> trendBuckets([DateTime? now]) {
     final DateRange r = this == DashboardPeriod.today
         ? DashboardPeriod.last7.current(now)
         : current(now);
-
-    // UTC se gino taaki DST ki wajah se din na khiske.
     final int days = DateTime.utc(r.to.year, r.to.month, r.to.day)
         .difference(DateTime.utc(r.from.year, r.from.month, r.from.day))
         .inDays +
@@ -91,10 +81,6 @@ enum DashboardPeriod {
     ];
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// State
-// ═══════════════════════════════════════════════════════════════════════════
 
 class DashboardState {
   const DashboardState({
@@ -150,10 +136,6 @@ class DashboardState {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ViewModel
-// ═══════════════════════════════════════════════════════════════════════════
-
 class DashboardViewModel extends Notifier<DashboardState> {
   int _requestId = 0;
 
@@ -169,8 +151,6 @@ class DashboardViewModel extends Notifier<DashboardState> {
     await load();
   }
 
-  /// [refresh] true (pull-to-refresh) ho to purana data screen par rehta hai,
-  /// skeleton nahi aata.
   Future<void> load({bool refresh = false}) async {
     final int id = ++_requestId;
     final DashboardPeriod period = state.period;
@@ -188,8 +168,6 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final DashboardRepository repo = ref.read(dashboardRepositoryProvider);
     final DateRange cur = period.current();
     final DateRange prev = period.previous();
-
-    // Current + pichhli period, dono ek saath.
     final List<ApiResult<DailySalesReport>> results =
     await Future.wait<ApiResult<DailySalesReport>>(
       <Future<ApiResult<DailySalesReport>>>[
@@ -197,13 +175,9 @@ class DashboardViewModel extends Notifier<DashboardState> {
         repo.getDailySales(from: prev.from, to: prev.to),
       ],
     );
-
-    // Beech mein period badal gaya ya screen band ho gayi.
     if (!ref.mounted || id != _requestId) return;
-
     final DailySalesReport? report = results[0].dataOrNull;
     final DailySalesReport? previous = results[1].dataOrNull;
-
     if (report != null) {
       state = state.copyWith(
         isLoading: false,
@@ -227,7 +201,6 @@ class DashboardViewModel extends Notifier<DashboardState> {
     }
   }
 
-  /// Har bucket ka net sales alag call se (API mein din-wise series nahi hai).
   Future<void> _loadTrend(int id, DashboardPeriod period) async {
     final List<DateRange> buckets = period.trendBuckets();
     if (buckets.length < 2) return;
@@ -242,9 +215,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     );
 
     if (!ref.mounted || id != _requestId) return;
-    // Sab fail hue to chart mat dikhao (ek-do fail hon to unka point 0).
     if (!results.any((ApiResult<DailySalesReport> r) => r.isSuccess)) return;
-
     state = state.copyWith(
       trend: <double>[
         for (final ApiResult<DailySalesReport> r in results)

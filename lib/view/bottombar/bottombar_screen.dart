@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shopzo_pos/widget/app_button.dart';
 import 'package:shopzo_pos/widget/app_colors.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 import '../../utils/responsive.dart';
-import '../history_screen.dart';
+import '../held/held_screen.dart';
+import '../history/history_screen.dart';
 import '../home/dashboard_screen.dart';
 import '../product/product_screen.dart';
+import '../sell/sell_screen.dart';
 
 class _NavItem {
   const _NavItem(this.label, this.icon, this.activeIcon);
@@ -33,13 +36,14 @@ class MainShellScreen extends StatefulWidget {
 
 class _MainShellScreenState extends State<MainShellScreen> {
   int _index = 0;
+  bool _exitOpen = false;
 
-  final List<Widget> _pages = const <Widget>[
-    DashboardScreen(),
-    _ComingSoon(title: 'Held Sales'),
-    _ComingSoon(title: 'New Sale'),
-    HistoryScreen(),
-    ProductListScreen(),
+  late final List<Widget> _pages = <Widget>[
+    const DashboardScreen(),
+    HeldScreen(onResumed: () => _select(_sellIndex)), // resume ke baad Sell tab
+    const SellScreen(),
+    const HistoryScreen(),
+    const ProductListScreen(),
   ];
 
   void _select(int i) {
@@ -48,18 +52,80 @@ class _MainShellScreenState extends State<MainShellScreen> {
     setState(() => _index = i);
   }
 
+
+  Future<void> _onBack() async {
+    if (_index != 0) {
+      setState(() => _index = 0);
+      return;
+    }
+    if (_exitOpen) return;
+    _exitOpen = true;
+    HapticFeedback.mediumImpact();
+
+    final bool? exit = await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Exit',
+      barrierColor: AppColors.overlay,
+      transitionDuration: const Duration(milliseconds: 380),
+      pageBuilder: (BuildContext c, Animation<double> a, Animation<double> s) =>
+      const _ExitDialog(),
+      transitionBuilder: (BuildContext c, Animation<double> anim,
+          Animation<double> sec, Widget child) {
+        final Animation<double> curved = CurvedAnimation(
+          parent: anim,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeIn,
+        );
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.8, end: 1).animate(curved),
+            alignment: Alignment.center,
+            child: child,
+          ),
+        );
+      },
+    );
+
+    _exitOpen = false;
+    if (exit == true) SystemNavigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppPalette palette = context.palette;
     final bool tablet = context.isTablet;
+    final bool keyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final double bottomInset = MediaQuery.paddingOf(context).bottom;
 
     final Widget content = IndexedStack(index: _index, children: _pages);
 
+    // Phone: bar body ke Stack me hai. Content sirf bar ki height tak aata hai
+    // (koi extra gap nahi), Sell button content ke upar float karta hai.
+    final Widget phoneBody = Stack(
+      children: <Widget>[
+        Column(
+          children: <Widget>[
+            Expanded(child: content),
+            if (!keyboard)
+              SizedBox(height: _BottomBar._barHeight + bottomInset),
+          ],
+        ),
+        if (!keyboard)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _BottomBar(index: _index, onTap: _select),
+          ),
+      ],
+    );
+
     return PopScope(
-      // Back dabane par pehle Home tab pe jao, phir app band ho.
-      canPop: _index == 0,
+      canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) {
-        if (!didPop) setState(() => _index = 0);
+        if (!didPop) _onBack();
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: palette.isDark
@@ -101,10 +167,116 @@ class _MainShellScreenState extends State<MainShellScreen> {
               Expanded(child: content),
             ],
           )
-              : content,
-          bottomNavigationBar: tablet
-              ? null
-              : _BottomBar(index: _index, onTap: _select),
+              : phoneBody,
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Exit popup (animated bubble)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _ExitDialog extends StatelessWidget {
+  const _ExitDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette palette = context.palette;
+
+    return Center(
+      child: Material(
+        type: MaterialType.transparency,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 28),
+          padding: const EdgeInsets.fromLTRB(22, 26, 22, 20),
+          constraints: const BoxConstraints(maxWidth: 360),
+          decoration: BoxDecoration(
+            color: palette.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: palette.border.withValues(alpha: 0.6)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: AppColors.coral.withValues(alpha: 0.18),
+                blurRadius: 30,
+                offset: const Offset(0, 14),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Icon bubble: bounce ke saath aata hai.
+              Center(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 700),
+                  curve: Curves.elasticOut,
+                  builder: (BuildContext c, double t, Widget? child) =>
+                      Transform.scale(scale: t, child: child),
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: palette.isDark
+                          ? AppColors.coral.withAlpha(36)
+                          : AppColors.coralSoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.logout_rounded,
+                      size: 32,
+                      color: AppColors.coral,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Exit app?',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.h2.copyWith(color: palette.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Are you sure you want to close the app?',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body.copyWith(
+                  color: palette.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: AppButton(
+                      label: 'Stay',
+                      variant: AppButtonVariant.outline,
+                      size: AppButtonSize.medium,
+                      onPressed: () => Navigator.of(context).pop(false),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: AppButton(
+                      label: 'Exit',
+                      variant: AppButtonVariant.danger,
+                      size: AppButtonSize.medium,
+                      onPressed: () => Navigator.of(context).pop(true),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -123,13 +295,15 @@ class _BottomBar extends StatelessWidget {
 
   static const double _barHeight = 64;
   static const double _lift = 28; // button bar ke upar kitna nikla rahe
-  static const double _sellSize = 60;
+  static const double _sellSize = 50;
 
   @override
   Widget build(BuildContext context) {
     final AppPalette palette = context.palette;
     final double bottomInset = MediaQuery.paddingOf(context).bottom;
 
+    // Upar ka _lift hissa transparent hai: touch niche content tak jaate hain,
+    // sirf Sell button apna tap leta hai.
     return SizedBox(
       height: _barHeight + _lift + bottomInset,
       child: Stack(
@@ -169,7 +343,7 @@ class _BottomBar extends StatelessWidget {
               ),
             ),
           ),
-          // Sell button (bar ke upar, hit-test ke liye Stack ke andar hi hai)
+          // Sell button
           Positioned(
             top: 0,
             left: 0,
@@ -190,15 +364,14 @@ class _BottomBar extends StatelessWidget {
                       boxShadow: <BoxShadow>[
                         BoxShadow(
                           color: AppColors.primary.withValues(alpha: 0.40),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
+                          blurRadius: 7,
                         ),
                       ],
                     ),
                     child: const Icon(
                       Icons.add_rounded,
                       color: Colors.white,
-                      size: 34,
+                      size: 28,
                     ),
                   ),
                 ),
@@ -268,7 +441,7 @@ class _NavTile extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               child: Icon(
                 selected ? item.activeIcon : item.icon,
-                size: 24,
+                size: 23,
                 color: color,
               ),
             ),
@@ -280,37 +453,6 @@ class _NavTile extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ComingSoon extends StatelessWidget {
-  const _ComingSoon({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Icon(Icons.construction_rounded,
-                size: 40, color: AppColors.primary),
-            const SizedBox(height: 12),
-            Text(title, style: AppTextStyles.h2.copyWith(
-              color: context.palette.textPrimary,
-            )),
-            const SizedBox(height: 4),
-            Text(
-              'Coming soon',
-              style: AppTextStyles.body
-                  .copyWith(color: context.palette.textSecondary),
             ),
           ],
         ),

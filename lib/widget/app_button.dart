@@ -4,22 +4,7 @@ import 'app_colors.dart';
 import 'app_dimens.dart';
 import 'app_textstyle.dart';
 
-enum AppButtonVariant {
-  /// Violet gradient: main action (Sign in, Pay Now, Start Shift)
-  primary,
-
-  /// Soft violet tint: secondary action (Hold Sale, Biometrics)
-  tonal,
-
-  /// Violet border, transparent fill
-  outline,
-
-  /// Coral: destructive (End Shift, Cancel order)
-  danger,
-
-  /// Sirf text jaisa (Forgot password?)
-  ghost,
-}
+enum AppButtonVariant { primary, tonal, outline, danger, ghost }
 
 enum AppButtonSize { large, medium, small }
 
@@ -78,7 +63,8 @@ class AppButton extends StatelessWidget {
 
   _ButtonColors _colors(AppPalette palette, bool active) {
     final bool transparentVariant =
-        variant == AppButtonVariant.outline || variant == AppButtonVariant.ghost;
+        variant == AppButtonVariant.outline ||
+        variant == AppButtonVariant.ghost;
 
     if (!active) {
       return _ButtonColors(
@@ -103,12 +89,16 @@ class AppButton extends StatelessWidget {
         );
       case AppButtonVariant.tonal:
         return _ButtonColors(
-          foreground: palette.isDark ? AppColors.primaryLight : AppColors.primary,
+          foreground: palette.isDark
+              ? AppColors.primaryLight
+              : AppColors.primary,
           background: palette.primarySoft,
         );
       case AppButtonVariant.outline:
         return _ButtonColors(
-          foreground: palette.isDark ? AppColors.primaryLight : AppColors.primary,
+          foreground: palette.isDark
+              ? AppColors.primaryLight
+              : AppColors.primary,
           border: palette.isDark ? AppColors.primaryLight : AppColors.primary,
         );
       case AppButtonVariant.danger:
@@ -125,7 +115,9 @@ class AppButton extends StatelessWidget {
         );
       case AppButtonVariant.ghost:
         return _ButtonColors(
-          foreground: palette.isDark ? AppColors.primaryLight : AppColors.primary,
+          foreground: palette.isDark
+              ? AppColors.primaryLight
+              : AppColors.primary,
         );
     }
   }
@@ -196,7 +188,9 @@ class AppButton extends StatelessWidget {
               onTap: enabled ? _handleTap : null,
               borderRadius: radius,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: dims.horizontalPadding),
+                padding: EdgeInsets.symmetric(
+                  horizontal: dims.horizontalPadding,
+                ),
                 child: Center(
                   widthFactor: fullWidth ? null : 1,
                   child: Stack(

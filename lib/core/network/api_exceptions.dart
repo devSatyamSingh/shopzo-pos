@@ -1,11 +1,7 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
-
 import '../errors/failure.dart';
 
-/// Dio / server ke har error ko ek clean exception mein badalta hai.
-/// Server ne jo `message` bheja hai wahi [message] mein aata hai.
 class ApiException implements Exception {
   const ApiException({
     required this.message,
@@ -21,7 +17,6 @@ class ApiException implements Exception {
   final Map<String, String> fieldErrors;
   final dynamic raw;
 
-  // ── Factories ────────────────────────────────────────────────────────────
 
   factory ApiException.fromDioException(DioException e) {
     final Object? inner = e.error;
@@ -31,7 +26,7 @@ class ApiException implements Exception {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-      case DioExceptionType.transformTimeout: // <-- ye add karo
+      case DioExceptionType.transformTimeout:
         return const ApiException(
           message: 'The server is taking too long to respond. Please try again.',
           type: FailureType.timeout,
@@ -68,8 +63,7 @@ class ApiException implements Exception {
     }
   }
 
-  /// Server body se exception banata hai. Error response (4xx/5xx) aur
-  /// `{"success": false}` wale 200 response, dono ke liye.
+
   factory ApiException.fromBody(dynamic body, {int? statusCode}) {
     return ApiException(
       message: extractMessage(body) ?? _defaultMessage(statusCode),
@@ -87,8 +81,6 @@ class ApiException implements Exception {
     );
   }
 
-  // ── Conversion ───────────────────────────────────────────────────────────
-
   Failure toFailure() {
     return Failure(
       message: message,
@@ -99,21 +91,13 @@ class ApiException implements Exception {
     );
   }
 
-  // ── Server body parsing ──────────────────────────────────────────────────
-
-  /// Common formats handle karta hai:
-  ///  {"message": "..."}   {"error": "..."}   {"errors": ["..."]}
-  ///  {"errors": [{"field": "phone", "message": "..."}]}
-  ///  {"errors": {"phone": ["..."]}}
   static String? extractMessage(dynamic body) {
     if (body is String) {
       final String t = body.trim();
-      // HTML (nginx 502 page) ya bohot lamba text user ko mat dikhao.
       if (t.isNotEmpty && t.length <= 200 && !t.contains('<')) return t;
       return null;
     }
     if (body is! Map) return null;
-
     for (final String key in const <String>[
       'message',
       'error',
@@ -204,7 +188,6 @@ class ApiException implements Exception {
     }
   }
 
-  /// Sirf tab use hota hai jab server ne koi message hi nahi bheja.
   static String _defaultMessage(int? status) {
     if (status == null) return 'Request failed. Please try again.';
     if (status >= 500) return 'Server error. Please try again later.';

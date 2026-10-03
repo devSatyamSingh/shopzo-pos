@@ -1,8 +1,3 @@
-/// GET /products/pos/search
-///
-/// Response: `{ "data": [ProductModel...], "pagination": {...} }`
-/// Poori body chahiye (list + pagination), isliye repository mein `bodyParser`
-/// use hota hai aur [ProductPage.fromJson] ko poori body milti hai.
 
 enum StockLevel { inStock, low, out }
 
@@ -33,9 +28,6 @@ class ProductModel {
   final List<ProductVariant> variants;
 
   int get variantCount => variants.length;
-
-  /// Variants wale product ka asli stock unke variants ka jod hota hai
-  /// (top-level `stock` unse match nahi karta).
   int get effectiveStock => hasVariants && variants.isNotEmpty
       ? variants.fold<int>(0, (int s, ProductVariant v) => s + v.stock)
       : stock;
@@ -117,7 +109,6 @@ class ProductVariant {
   }
 }
 
-/// Ek page ka result + pagination.
 class ProductPage {
   const ProductPage({
     required this.items,
@@ -155,8 +146,6 @@ class ProductPage {
     );
   }
 }
-
-// ── Safe converters ────────────────────────────────────────────────────────
 
 double _double(dynamic v) {
   if (v is num) return v.toDouble();

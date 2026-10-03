@@ -7,16 +7,11 @@ import 'package:shopzo_pos/api/api_urls.dart';
 import 'package:shopzo_pos/core/errors/failure.dart';
 import 'package:shopzo_pos/model/product_model.dart';
 
-/// POS products. Exception kabhi bahar nahi aata, hamesha [ApiResult].
 class ProductRepository {
   const ProductRepository(this._api);
 
   final ApiService _api;
 
-  /// GET /products/pos/search?page=1&limit=20&search=...
-  ///
-  /// ⚠️ Query param ke naam (`page`, `limit`, `search`) mera andaza hain,
-  /// Postman ke Params tab se match kar lena.
   Future<ApiResult<ProductPage>> getProducts({
     int page = 1,
     int limit = 20,

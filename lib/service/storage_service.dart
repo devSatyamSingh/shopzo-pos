@@ -3,16 +3,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../core/constants/storage_keys.dart';
 
-/// Tokens + logged-in user secure storage mein jate hain (Keystore / Keychain).
-/// Har API call pe disk read na ho isliye tokens ka memory cache bhi hai.
-///
-/// Ye service model ko nahi jaanti: user ko JSON string ke roop mein store karti hai.
+
 class StorageService {
   StorageService({FlutterSecureStorage? secure})
       : _secure = secure ?? const FlutterSecureStorage();
-
   final FlutterSecureStorage _secure;
-
   String? _accessCache;
   String? _refreshCache;
   Future<void>? _loading;
@@ -23,8 +18,6 @@ class StorageService {
       _refreshCache = await _secure.read(key: StorageKeys.refreshToken);
     }();
   }
-
-  // ── Tokens ───────────────────────────────────────────────────────────────
 
   Future<String?> getAccessToken() async {
     await _ensureLoaded();
@@ -79,15 +72,11 @@ class StorageService {
   Future<void> saveUserJson(String userJson) =>
       _secure.write(key: StorageKeys.user, value: userJson);
 
-  /// Logout / session expiry pe: tokens, user, active shift sab saaf.
-  /// Remembered phone aur device settings bachi rehti hain.
   Future<void> clearSession() async {
     await clearTokens();
     await _secure.delete(key: StorageKeys.user);
     await _secure.delete(key: StorageKeys.activeShiftId);
   }
-
-  // ── Remember me (sirf phone number, password kabhi nahi) ─────────────────
 
   Future<String?> getRememberedPhone() =>
       _secure.read(key: StorageKeys.rememberedPhone);
@@ -98,7 +87,6 @@ class StorageService {
   Future<void> clearRememberedPhone() =>
       _secure.delete(key: StorageKeys.rememberedPhone);
 
-  // ── Generic key-value ────────────────────────────────────────────────────
 
   Future<void> write(String key, String value) =>
       _secure.write(key: key, value: value);
@@ -107,7 +95,6 @@ class StorageService {
 
   Future<void> delete(String key) => _secure.delete(key: key);
 
-  /// Poora reset (settings ya app data clear).
   Future<void> clearAll() async {
     _accessCache = null;
     _refreshCache = null;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Spacing scale (padding / gap). Hardcoded numbers ki jagah yehi use karo.
 class AppSpacing {
   AppSpacing._();
 
@@ -13,7 +12,6 @@ class AppSpacing {
   static const double xxxl = 32;
 }
 
-/// Corner radius scale.
 class AppRadius {
   AppRadius._();
 
@@ -33,7 +31,6 @@ class AppRadius {
   );
 }
 
-/// Fixed component sizes.
 class AppSizes {
   AppSizes._();
 

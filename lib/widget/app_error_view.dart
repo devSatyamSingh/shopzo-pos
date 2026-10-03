@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
-
 import '../core/errors/failure.dart';
 import 'app_button.dart';
 import 'app_colors.dart';
 import 'app_text.dart';
 
-/// Screen ka data load na ho paye (products, dashboard, history) to ye dikhao.
-/// Message wahi hai jo server ne bheja (ya no-internet ka friendly message).
-///
-/// ```dart
-/// if (state.failure != null) {
-///   return AppErrorView(failure: state.failure!, onRetry: notifier.load);
-/// }
-/// ```
 class AppErrorView extends StatelessWidget {
   const AppErrorView({super.key, required this.failure, this.onRetry});
 
@@ -35,7 +26,10 @@ class AppErrorView extends StatelessWidget {
               Container(
                 width: 88,
                 height: 88,
-                decoration: BoxDecoration(color: look.soft, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: look.soft,
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(look.icon, size: 40, color: look.color),
               ),
               const SizedBox(height: 20),
@@ -49,7 +43,10 @@ class AppErrorView extends StatelessWidget {
               if (failure.statusCode != null) ...<Widget>[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: look.color.withAlpha(30),
                     borderRadius: BorderRadius.circular(8),
@@ -99,7 +96,9 @@ class AppErrorView extends StatelessWidget {
       case FailureType.forbidden:
         return _ErrorLook(
           icon: Icons.lock_outline_rounded,
-          title: type == FailureType.forbidden ? 'Access denied' : 'Unauthorized',
+          title: type == FailureType.forbidden
+              ? 'Access denied'
+              : 'Unauthorized',
           color: AppColors.coral,
           soft: soft(AppColors.coral, AppColors.coralSoft),
         );

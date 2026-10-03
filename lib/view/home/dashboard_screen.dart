@@ -1,38 +1,120 @@
 import 'dart:math' as math;
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:shopzo_pos/utils/app_utils.dart';
+import 'package:shopzo_pos/view/home/shift_card.dart';
 import 'package:shopzo_pos/viewmodel/auth_viewmodel.dart';
 import 'package:shopzo_pos/viewmodel/dashboard_viewmodel.dart';
+import 'package:shopzo_pos/viewmodel/shift_viewmodel.dart';
 import 'package:shopzo_pos/widget/app_button.dart';
 import 'package:shopzo_pos/widget/app_colors.dart';
 import 'package:shopzo_pos/widget/app_dimens.dart';
-// ⚠️ File ka naam apne project ke hisaab se check kar lena.
 import 'package:shopzo_pos/widget/app_error_view.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 import '../../model/dashboard_model.dart';
 import '../../model/user_model.dart';
 import '../../utils/responsive.dart';
+import 'close_sfit_card.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// TODO: Shift strip abhi placeholder hai (shift API judne par replace kar dena).
-// Header ka naam / role ab real user (currentUserProvider) se aata hai.
-// ═══════════════════════════════════════════════════════════════════════════
-class _Placeholder {
-  _Placeholder._();
 
-  static const String shiftText = 'Shift open since 09:30 AM';
-  static const double registerCash = 5000;
+class DashboardScreen extends ConsumerWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final DashboardState state = ref.watch(dashboardViewModelProvider);
+    final DashboardViewModel vm = ref.read(dashboardViewModelProvider.notifier);
+    final UserModel? user = ref.watch(currentUserProvider);
+
+    ref.listen<ShiftPhase>(
+      shiftViewModelProvider.select((ShiftState s) => s.phase),
+          (ShiftPhase? prev, ShiftPhase next) {
+        final bool opened = prev == ShiftPhase.none && next == ShiftPhase.open;
+        final bool closed = prev == ShiftPhase.open && next == ShiftPhase.none;
+        if (opened || closed) vm.load(refresh: true);
+      },
+    );
+
+    return SafeArea(
+      bottom: false,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints box) {
+          final bool wide = box.maxWidth >= 760;
+          final bool m = context.isMobile;
+          final double gap = m ? 12 : 15;
+
+          return RefreshIndicator(
+            onRefresh: () => vm.load(refresh: true),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(
+                horizontal: wide ? 32 : 16,
+                vertical: 10,
+              ),
+              child: ResponsiveCenter(
+                maxWidth: Breakpoints.contentMaxWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    _Header(
+                      user: user,
+                      onEndShift: () {
+                        if (ref.read(hasOpenShiftProvider)) {
+                          showCloseShiftDialog(context);
+                        } else {
+                          AppUtils.showInfo('There is no active shift to end.');
+                        }
+                      },
+                    ),
+                    SizedBox(height: gap),
+                    const ShiftStrip(),
+                    SizedBox(height: gap),
+                    _PeriodChips(
+                      selected: state.period,
+                      onChanged: vm.setPeriod,
+                    ),
+                    SizedBox(height: gap),
+                    _buildBody(state, vm, wide),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBody(DashboardState state, DashboardViewModel vm, bool wide) {
+    if (state.isLoading) {
+      return _DashboardSkeleton(wide: wide);
+    }
+    final DailySalesReport? report = state.report;
+    if (report == null) {
+      final failure = state.failure;
+      return SizedBox(
+        height: 360,
+        child: failure == null
+            ? const SizedBox.shrink()
+            : AppErrorView(failure: failure, onRetry: () => vm.load()),
+      );
+    }
+    return KeyedSubtree(
+      key: ValueKey<DashboardPeriod>(state.period),
+      child: _ReportBody(
+        report: report,
+        growth: state.growth,
+        trend: state.trend,
+        compareLabel: state.period.compareLabel,
+        wide: wide,
+      ),
+    );
+  }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Helpers
-// ═══════════════════════════════════════════════════════════════════════════
 
-/// Indian format: 62655.48 -> ₹62,655.48 , 124500 -> ₹1,24,500
 String _inr(num value, {int decimals = 0}) {
   final List<String> parts = value.toStringAsFixed(decimals).split('.');
   String whole = parts[0];
@@ -53,13 +135,11 @@ String _greeting() {
   return 'Good evening';
 }
 
-/// 99.4 -> "99.4", 25.0 -> "25"
 String _pct(double v) {
   final String s = v.toStringAsFixed(1);
   return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
 }
 
-/// "CASH" -> "Cash", "ONLINE" -> "Online", "POS"/"UPI"/"COD" same rehte hain.
 String _pretty(String raw) {
   final String t = raw.trim();
   if (t.isEmpty) return t;
@@ -111,7 +191,6 @@ Color _channelColor(String name, int index) {
   }
 }
 
-/// Mobile pe chhota, tablet pe thoda bada text. Color automatic (light/dark).
 class _Txt extends StatelessWidget {
   const _Txt(
       this.text,
@@ -162,7 +241,6 @@ class _Txt extends StatelessWidget {
   }
 }
 
-/// 0 se value tak count-up. Value badle to naye value tak animate hoga.
 class _CountUp extends StatelessWidget {
   const _CountUp({required this.value, required this.builder});
 
@@ -221,93 +299,6 @@ class _EmptyNote extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Center(
         child: _Txt(text, AppTextStyles.body, m: 12, secondary: true),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Screen
-// ═══════════════════════════════════════════════════════════════════════════
-
-class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final DashboardState state = ref.watch(dashboardViewModelProvider);
-    final DashboardViewModel vm = ref.read(dashboardViewModelProvider.notifier);
-    final UserModel? user = ref.watch(currentUserProvider);
-
-    return SafeArea(
-      bottom: false,
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints box) {
-          final bool wide = box.maxWidth >= 760;
-          final bool m = context.isMobile;
-          final double gap = m ? 12 : 16;
-
-          return RefreshIndicator(
-            onRefresh: () => vm.load(refresh: true),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.symmetric(
-                horizontal: wide ? 32 : 16,
-                vertical: 10,
-              ),
-              child: ResponsiveCenter(
-                maxWidth: Breakpoints.contentMaxWidth,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    _Header(
-                      user: user,
-                      onNotifications: () =>
-                          AppUtils.showInfo('No new notifications'),
-                      onEndShift: () => AppUtils.showInfo(
-                          'End shift will be available soon.'),
-                    ),
-                    SizedBox(height: gap),
-                    const _ShiftStrip(),
-                    SizedBox(height: gap),
-                    _PeriodChips(
-                      selected: state.period,
-                      onChanged: vm.setPeriod,
-                    ),
-                    SizedBox(height: gap),
-                    _buildBody(state, vm, wide),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildBody(DashboardState state, DashboardViewModel vm, bool wide) {
-    if (state.isLoading) {
-      return _DashboardSkeleton(wide: wide);
-    }
-    final DailySalesReport? report = state.report;
-    if (report == null) {
-      final failure = state.failure;
-      return SizedBox(
-        height: 380,
-        child: failure == null
-            ? const SizedBox.shrink()
-            : AppErrorView(failure: failure, onRetry: () => vm.load()),
-      );
-    }
-    return KeyedSubtree(
-      key: ValueKey<DashboardPeriod>(state.period),
-      child: _ReportBody(
-        report: report,
-        growth: state.growth,
-        trend: state.trend,
-        compareLabel: state.period.compareLabel,
-        wide: wide,
       ),
     );
   }
@@ -436,19 +427,14 @@ class _ReportBody extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Top section
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _Header extends StatelessWidget {
   const _Header({
     required this.user,
-    required this.onNotifications,
     required this.onEndShift,
   });
 
   final UserModel? user;
-  final VoidCallback onNotifications;
   final VoidCallback onEndShift;
 
   @override
@@ -466,8 +452,8 @@ class _Header extends StatelessWidget {
     return Row(
       children: <Widget>[
         Container(
-          width: m ? 42 : 54,
-          height: m ? 42 : 54,
+          width: m ? 39 : 50,
+          height: m ? 39 : 50,
           alignment: Alignment.center,
           decoration: const BoxDecoration(
             gradient: AppColors.primaryGradient,
@@ -476,8 +462,8 @@ class _Header extends StatelessWidget {
           child: _Txt(
             name.substring(0, 1).toUpperCase(),
             AppTextStyles.h2,
-            m: 17,
-            t: 22,
+            m: 15,
+            t: 19,
             color: Colors.white,
           ),
         ),
@@ -522,18 +508,9 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 6),
-        AppIconButton(
-          icon: Icons.notifications_none_rounded,
-          showBadge: true,
-          tooltip: 'Notifications',
-          size: m ? 40 : AppSizes.iconButton,
-          onPressed: onNotifications,
-        ),
-        SizedBox(width: m ? 8 : 10),
         Material(
           color: palette.isDark
-              ? AppColors.coral.withAlpha(36)
+              ? AppColors.coral.withAlpha(30)
               : AppColors.coralSoft,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           child: InkWell(
@@ -541,20 +518,20 @@ class _Header extends StatelessWidget {
             onTap: onEndShift,
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: m ? 11 : 14,
-                vertical: m ? 9 : 12,
+                horizontal: m ? 10 : 12,
+                vertical: m ? 9 : 11,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Icon(Icons.logout_rounded,
-                      size: m ? 16 : 18, color: AppColors.coral),
+                      size: m ? 14 : 16, color: AppColors.coral),
                   const SizedBox(width: 5),
                   Text(
                     'End shift',
                     style: AppTextStyles.bodyBold.copyWith(
                       color: AppColors.coral,
-                      fontSize: m ? 12 : 13,
+                      fontSize: m ? 11 : 12,
                     ),
                   ),
                 ],
@@ -563,54 +540,6 @@ class _Header extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ShiftStrip extends StatelessWidget {
-  const _ShiftStrip();
-
-  @override
-  Widget build(BuildContext context) {
-    final AppPalette palette = context.palette;
-    final bool m = context.isMobile;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: m ? 14 : 18, vertical: m ? 10 : 14),
-      decoration: BoxDecoration(
-        color: palette.isDark ? AppColors.mint.withAlpha(30) : AppColors.mintSoft,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.mint,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _Txt(
-              _Placeholder.shiftText,
-              AppTextStyles.bodyBold,
-              m: 12,
-              t: 14,
-              maxLines: 1,
-            ),
-          ),
-          _Txt('Register ', AppTextStyles.body, m: 12, t: 14, secondary: true),
-          _Txt(
-            _inr(_Placeholder.registerCash),
-            AppTextStyles.bodyBold,
-            m: 12,
-            t: 14,
-            color: palette.isDark ? AppColors.mint : AppColors.mintDark,
-          ),
-        ],
-      ),
     );
   }
 }
@@ -671,10 +600,6 @@ class _PeriodChips extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Net sales card + sparkline
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _NetSalesCard extends StatelessWidget {
   const _NetSalesCard({
@@ -785,8 +710,8 @@ class _NetSalesCard extends StatelessWidget {
                     child: _Txt(
                       _inr(v, decimals: 2),
                       AppTextStyles.hero,
-                      m: 28,
-                      t: 38,
+                      m: 20,
+                      t: 28,
                       color: Colors.white,
                       tabular: true,
                     ),
@@ -816,11 +741,16 @@ class _Sparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double maxValue = values.fold<double>(0, math.max);
-    final double maxY = maxValue <= 0 ? 1 : maxValue * 1.25;
+    final double maxValue = values.reduce(math.max);
+    final double minValue = values.reduce(math.min);
+    final double range = maxValue - minValue;
+    final double pad = range > 0
+        ? range * 0.25
+        : (maxValue.abs() > 0 ? maxValue.abs() * 0.5 : 1);
+    final double minY = minValue - pad;
+    final double maxY = maxValue + pad;
 
     return TweenAnimationBuilder<double>(
-      // Naya trend aane par animation dobara chalti hai.
       key: ValueKey<int>(Object.hashAll(values)),
       tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(milliseconds: 1400),
@@ -830,7 +760,7 @@ class _Sparkline extends StatelessWidget {
           LineChartData(
             minX: 0,
             maxX: (values.length - 1).toDouble(),
-            minY: 0,
+            minY: minY,
             maxY: maxY,
             gridData: const FlGridData(show: false),
             titlesData: const FlTitlesData(show: false),
@@ -840,10 +770,10 @@ class _Sparkline extends StatelessWidget {
               LineChartBarData(
                 spots: <FlSpot>[
                   for (int i = 0; i < values.length; i++)
-                    FlSpot(i.toDouble(), values[i] * t),
+                    FlSpot(i.toDouble(), minY + (values[i] - minY) * t),
                 ],
                 isCurved: true,
-                curveSmoothness: 0.35,
+                curveSmoothness: 0.33,
                 preventCurveOverShooting: true,
                 color: Colors.white,
                 barWidth: 2.5,
@@ -869,9 +799,6 @@ class _Sparkline extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Stat cards
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _StatValue extends StatelessWidget {
   const _StatValue(this.text);
@@ -916,15 +843,15 @@ class _StatCard extends StatelessWidget {
     final bool m = context.isMobile;
 
     return _Card(
-      padding: EdgeInsets.all(m ? 12 : 16),
+      padding: EdgeInsets.all(m ? 10 : 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
               Container(
-                width: m ? 34 : 44,
-                height: m ? 34 : 44,
+                width: m ? 34 : 40,
+                height: m ? 34 : 40,
                 decoration: BoxDecoration(
                   color: dark ? iconColor.withAlpha(36) : iconBg,
                   borderRadius: BorderRadius.circular(m ? 11 : 14),
@@ -942,10 +869,6 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Sales by channel
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _ChannelCard extends StatelessWidget {
   const _ChannelCard({required this.channels});
@@ -1074,9 +997,6 @@ class _ChannelRow extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Payment methods (donut)
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _PaymentSlice {
   const _PaymentSlice(this.name, this.amount, this.percent, this.color);
@@ -1238,10 +1158,6 @@ class _PaymentCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Top cashiers
-// ═══════════════════════════════════════════════════════════════════════════
-
 class _CashiersCard extends StatelessWidget {
   const _CashiersCard({required this.cashiers});
 
@@ -1356,9 +1272,6 @@ class _CashiersCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Skeleton loading (shimmer)
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _Shim extends StatelessWidget {
   const _Shim({required this.child});

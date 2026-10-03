@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-/// Error ka type. UI isse decide karta hai ki kya dikhana hai
-/// (jaise noInternet pe retry button, unauthorized pe login screen).
 enum FailureType {
   noInternet,
   timeout,
@@ -11,15 +9,13 @@ enum FailureType {
   forbidden, // 403
   notFound, // 404
   conflict, // 409
-  tooManyRequests, // 429
-  server, // 5xx
+  tooManyRequests,
+  server,
   cancelled,
-  parsing, // response aaya lekin model mein convert nahi hua
+  parsing,
   unknown,
 }
 
-/// API ya app ka error. [message] wahi hai jo server ne bheja (agar bheja ho),
-/// isliye UI mein seedha dikha sakte ho.
 @immutable
 class Failure {
   const Failure({
@@ -29,19 +25,10 @@ class Failure {
     this.fieldErrors = const <String, String>{},
     this.raw,
   });
-
-  /// Server ka message (ya friendly fallback).
   final String message;
   final FailureType type;
-
-  /// HTTP status code (401, 404, 500...). Network error mein null.
   final int? statusCode;
-
-  /// Field-wise errors, jaise {'phone': 'Phone already exists'}.
-  /// Form ke TextField ke neeche dikhane ke liye.
   final Map<String, String> fieldErrors;
-
-  /// Server ki original body (debugging ke liye).
   final dynamic raw;
 
   bool get isNoInternet => type == FailureType.noInternet;
@@ -55,15 +42,6 @@ class Failure {
   String toString() => 'Failure(status: $statusCode, type: $type, message: $message)';
 }
 
-/// API call ka result: ya to success ya failure. Exception UI tak nahi aata.
-///
-/// ```dart
-/// final result = await api.post<User>(...);
-/// result.when(
-///   success: (s) => print(s.data),
-///   failure: (f) => AppUtils.showFailure(f.failure),
-/// );
-/// ```
 sealed class ApiResult<T> {
   const ApiResult();
 
@@ -94,8 +72,6 @@ class ApiSuccess<T> extends ApiResult<T> {
   const ApiSuccess({required this.data, this.message, this.statusCode});
 
   final T data;
-
-  /// Server ka success message, jaise "Login successful".
   final String? message;
   final int? statusCode;
 }

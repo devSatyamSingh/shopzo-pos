@@ -1,21 +1,3 @@
-/// GET /pos/reports/sales/daily?from=YYYY-MM-DD&to=YYYY-MM-DD
-///
-/// `ApiService` ke `parser` se sirf `data` wala hissa milta hai, wahi
-/// [DailySalesReport.fromJson] ko dena hai.
-///
-/// Sample:
-/// ```json
-/// {
-///   "dateRange": {"from": "...", "to": "..."},
-///   "totalOrders": 25,
-///   "grossSales": 145508.35,
-///   "totalRefunds": 1228.96,
-///   "netSales": 144279.39,
-///   "paymentBreakdown": {"COD": 144640.45, "CASH": 618.95, "UPI": 218.95},
-///   "channelBreakdown": {"POS": {"count": 2, "total": 837.9}},
-///   "cashierBreakdown": [{"cashierId": "..", "cashierName": "..", "totalSales": 837.9, "orderCount": 2}]
-/// }
-/// ```
 class DailySalesReport {
   const DailySalesReport({
     required this.from,
@@ -35,20 +17,11 @@ class DailySalesReport {
   final double grossSales;
   final double totalRefunds;
   final double netSales;
-
-  /// {'CASH': 618.95, 'UPI': 218.95, 'COD': 144640.45}
   final Map<String, double> paymentBreakdown;
-
-  /// {'POS': ChannelSales(2, 837.9), 'ONLINE': ChannelSales(23, 144670.45)}
   final Map<String, ChannelSales> channelBreakdown;
-
   final List<CashierSales> cashierBreakdown;
-
-  /// Server avg order nahi bhejta, isliye net sales / orders.
   double get avgOrderValue => totalOrders == 0 ? 0 : netSales / totalOrders;
-
-  double get paymentTotal =>
-      paymentBreakdown.values.fold<double>(0, (double s, double v) => s + v);
+  double get paymentTotal => paymentBreakdown.values.fold<double>(0, (double s, double v) => s + v);
 
   factory DailySalesReport.fromJson(Map<String, dynamic> json) {
     final dynamic range = json['dateRange'];
@@ -87,7 +60,6 @@ class DailySalesReport {
 
 class ChannelSales {
   const ChannelSales({required this.count, required this.total});
-
   final int count;
   final double total;
 
@@ -121,8 +93,6 @@ class CashierSales {
     );
   }
 }
-
-// ── Safe converters (server kabhi int, kabhi double, kabhi string bhejta hai) ──
 
 double _double(dynamic v) {
   if (v is num) return v.toDouble();

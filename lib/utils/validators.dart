@@ -1,15 +1,4 @@
-/// Form validator signature (TextFormField.validator ke saath match karta hai).
 typedef AppValidator = String? Function(String? value);
-
-/// Saare validators yahan.
-///
-/// Do type hain:
-///  1. Direct validators:  `Validators.phone`, `Validators.email`, `Validators.password`
-///     -> seedha `validator: Validators.phone` likho.
-///  2. Parametric validators: `Validators.required('Name')`, `Validators.minLength(3)`
-///     -> ye function return karte hain, isliye `validator: Validators.required('Name')`.
-///
-/// Multiple chahiye to: `Validators.compose([Validators.required('Name'), Validators.minLength(3)])`
 class Validators {
   Validators._();
 
@@ -18,8 +7,6 @@ class Validators {
     r'^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$',
   );
   static final RegExp _nameRegex = RegExp(r"^[A-Za-z][A-Za-z .'\-]*$");
-
-  // ── Basic ────────────────────────────────────────────────────────────────
 
   static AppValidator required([String fieldName = 'This field']) {
     return (String? value) {
@@ -48,7 +35,6 @@ class Validators {
     };
   }
 
-  /// Field optional hai: khali ho to pass, bhara ho to given validator chalega.
   static AppValidator optional(AppValidator validator) {
     return (String? value) {
       if (value == null || value.trim().isEmpty) return null;
@@ -56,7 +42,6 @@ class Validators {
     };
   }
 
-  /// Ek ke baad ek validators chalata hai, pehla error return karta hai.
   static AppValidator compose(List<AppValidator> validators) {
     return (String? value) {
       for (final AppValidator validator in validators) {
@@ -67,9 +52,7 @@ class Validators {
     };
   }
 
-  // ── Identity ─────────────────────────────────────────────────────────────
 
-  /// Indian 10-digit mobile number (6-9 se start).
   static String? phone(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Mobile number is required';
@@ -97,7 +80,6 @@ class Validators {
     return null;
   }
 
-  // ── Password ─────────────────────────────────────────────────────────────
 
   /// Login ke liye: sirf required check. Login pe strength rules mat lagao.
   static String? password(String? value) {
@@ -105,7 +87,6 @@ class Validators {
     return null;
   }
 
-  /// Naya password set karte waqt (staff create / change password).
   static String? strongPassword(String? value) {
     if (value == null || value.isEmpty) return 'Password is required';
     if (value.length < 8) return 'Use at least 8 characters';
@@ -118,7 +99,6 @@ class Validators {
     return null;
   }
 
-  /// `Validators.confirmPassword(() => passwordController.text)`
   static AppValidator confirmPassword(String Function() original) {
     return (String? value) {
       if (value == null || value.isEmpty) return 'Confirm your password';
@@ -151,7 +131,6 @@ class Validators {
     };
   }
 
-  /// Indian pincode (6 digits).
   static String? pincode(String? value) {
     if (value == null || value.trim().isEmpty) return 'Pincode is required';
     if (!RegExp(r'^[1-9]\d{5}$').hasMatch(value.trim())) {

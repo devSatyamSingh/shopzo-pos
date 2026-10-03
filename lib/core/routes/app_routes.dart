@@ -6,17 +6,11 @@ import 'package:shopzo_pos/core/constants/navigator_key.dart';
 import 'package:shopzo_pos/core/routes/route_name.dart';
 import 'package:shopzo_pos/view/splash/spalsh_screen.dart';
 import 'package:shopzo_pos/viewmodel/auth_viewmodel.dart';
-
 import '../../view/auth/login_screen.dart';
 import '../../view/bottombar/bottombar_screen.dart';
-import 'app_routes.dart';
+import '../../view/home/shift_gate.dart';
 
-/// Auth ke hisaab se router:
-///  - Splash: animation ke baad session check, phir home ya login
-///  - Logout ya session expire hote hi (kahin se bhi) apne aap login par
-///  - Login ho gaya to login screen par wapas nahi aa sakte
 final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
-  // Auth status badalte hi router ko redirect dobara chalane ko bolta hai.
   final ValueNotifier<int> authRefresh = ValueNotifier<int>(0);
   ref.listen<AuthStatus>(
     authViewModelProvider.select((AuthState s) => s.status),
@@ -25,7 +19,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
   ref.onDispose(authRefresh.dispose);
 
   return GoRouter(
-    navigatorKey: navigatorKey, // AppUtils ka message bubble isi se dikhta hai
+    navigatorKey: navigatorKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: kDebugMode,
     refreshListenable: authRefresh,
@@ -34,21 +28,14 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
       final String location = state.matchedLocation;
       final bool onSplash = location == AppRoutes.splash;
       final bool onLogin = location == AppRoutes.login;
-
-      // Session check hone tak splash par hi raho.
       if (status == AuthStatus.unknown) return onSplash ? null : AppRoutes.splash;
-
-      // Splash apni animation ke baad khud navigate karega.
       if (onSplash) return null;
-
       if (status == AuthStatus.unauthenticated) {
         return onLogin ? null : AppRoutes.login;
       }
-      // authenticated
       return onLogin ? AppRoutes.home : null;
     },
     routes: <RouteBase>[
-      // ── Splash ──────────────────────────────────────────────────────────
       GoRoute(
         path: AppRoutes.splash,
         builder: (BuildContext context, GoRouterState state) {
@@ -63,20 +50,16 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
           );
         },
       ),
-
-      // ── Login ───────────────────────────────────────────────────────────
       GoRoute(
         path: AppRoutes.login,
         pageBuilder: (BuildContext context, GoRouterState state) {
           return _fadePage(state, const LoginScreen());
         },
       ),
-
-      // ── Home ────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRoutes.home,
         pageBuilder: (BuildContext context, GoRouterState state) {
-          return _fadePage(state, const MainShellScreen());
+          return _fadePage(state, const ShiftGate(child: MainShellScreen()));
         },
       ),
     ],
@@ -86,7 +69,6 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
   );
 });
 
-/// Fade transition, splash se login jaate waqt smooth lage.
 CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
@@ -99,7 +81,6 @@ CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
   );
 }
 
-/// Temporary placeholder. Real screens ban jaayein to hata dena.
 class _ComingSoon extends StatelessWidget {
   const _ComingSoon({required this.title});
 

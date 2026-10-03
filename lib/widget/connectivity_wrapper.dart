@@ -8,12 +8,10 @@ import 'app_textstyle.dart';
 
 class ConnectivityWrapper extends ConsumerStatefulWidget {
   const ConnectivityWrapper({super.key, required this.child});
-
   final Widget child;
 
   @override
-  ConsumerState<ConnectivityWrapper> createState() =>
-      _ConnectivityWrapperState();
+  ConsumerState<ConnectivityWrapper> createState() => _ConnectivityWrapperState();
 }
 
 class _ConnectivityWrapperState extends ConsumerState<ConnectivityWrapper>
@@ -32,7 +30,6 @@ class _ConnectivityWrapperState extends ConsumerState<ConnectivityWrapper>
       vsync: this,
       duration: const Duration(milliseconds: 1100),
     );
-    // App offline hi khula ho to pulse chalu.
     if (ref.read(networkStatusProvider) == NetworkStatus.offline) {
       _pulse.repeat(reverse: true);
     }
@@ -65,7 +62,6 @@ class _ConnectivityWrapperState extends ConsumerState<ConnectivityWrapper>
   Future<void> _retry() async {
     if (_retrying) return;
     setState(() => _retrying = true);
-    // Kam se kam 600ms spinner dikhe, taaki user ko feedback mile.
     await Future.wait<void>(<Future<void>>[
       ref.read(connectivityServiceProvider).checkNow(),
       Future<void>.delayed(const Duration(milliseconds: 600)),
@@ -89,16 +85,15 @@ class _ConnectivityWrapperState extends ConsumerState<ConnectivityWrapper>
           alignment: Alignment.topCenter,
           child: showBanner
               ? _StatusBanner(
-            offline: offline,
-            retrying: _retrying,
-            onRetry: _retry,
-            pulse: _pulse,
-            topInset: topInset,
-          )
+                  offline: offline,
+                  retrying: _retrying,
+                  onRetry: _retry,
+                  pulse: _pulse,
+                  topInset: topInset,
+                )
               : const SizedBox(width: double.infinity, height: 0),
         ),
         Expanded(
-          // Banner status bar ki jagah le leta hai, isliye child se top padding hatao.
           child: MediaQuery.removePadding(
             context: context,
             removeTop: showBanner,
@@ -142,11 +137,11 @@ class _StatusBanner extends StatelessWidget {
             duration: const Duration(milliseconds: 250),
             child: offline
                 ? _OfflineRow(
-              key: const ValueKey<String>('offline'),
-              pulse: pulse,
-              retrying: retrying,
-              onRetry: onRetry,
-            )
+                    key: const ValueKey<String>('offline'),
+                    pulse: pulse,
+                    retrying: retrying,
+                    onRetry: onRetry,
+                  )
                 : const _OnlineRow(key: ValueKey<String>('online')),
           ),
         ),
@@ -173,7 +168,11 @@ class _OfflineRow extends StatelessWidget {
       children: <Widget>[
         FadeTransition(
           opacity: Tween<double>(begin: 0.4, end: 1).animate(pulse),
-          child: const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 22),
+          child: const Icon(
+            Icons.wifi_off_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -241,21 +240,21 @@ class _RetryButton extends StatelessWidget {
           child: Center(
             child: retrying
                 ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                strokeCap: StrokeCap.round,
-                color: Colors.white,
-              ),
-            )
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      strokeCap: StrokeCap.round,
+                      color: Colors.white,
+                    ),
+                  )
                 : Text(
-              'Retry',
-              style: AppTextStyles.bodyBold.copyWith(
-                color: Colors.white,
-                fontSize: 13,
-              ),
-            ),
+                    'Retry',
+                    style: AppTextStyles.bodyBold.copyWith(
+                      color: Colors.white,
+                      fontSize: 13,
+                    ),
+                  ),
           ),
         ),
       ),

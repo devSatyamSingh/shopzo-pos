@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-/// Backend ke roles. Naya role aaye to `unknown` banega aur original string
-/// [UserModel.roleName] mein rahegi, app crash nahi hogi.
 enum UserRole {
   admin,
   manager,
@@ -39,25 +37,20 @@ class UserModel {
   final String phone;
   final String? email;
   final UserRole role;
-
-  /// Server se aayi original role string, jaise "ADMIN".
   final String roleName;
   final bool isActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-
   bool get isAdmin => role == UserRole.admin;
   bool get isManager => role == UserRole.manager;
   bool get isCashier => role == UserRole.cashier;
 
-  /// "ADMIN" -> "Admin"
   String get roleLabel {
     if (roleName.isEmpty) return 'User';
     final String lower = roleName.toLowerCase();
     return lower[0].toUpperCase() + lower.substring(1);
   }
 
-  /// "Default Admin" -> "DA"
   String get initials {
     final List<String> parts =
     name.trim().split(RegExp(r'\s+')).where((String p) => p.isNotEmpty).toList();
@@ -92,7 +85,6 @@ class UserModel {
     'updatedAt': updatedAt?.toIso8601String(),
   };
 
-  /// Storage se padhe hue JSON string ko safely user banata hai. Kharab ho to null.
   static UserModel? tryParse(String? source) {
     if (source == null || source.isEmpty) return null;
     try {

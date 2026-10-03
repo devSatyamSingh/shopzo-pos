@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Raw brand colors. Ye wahi colors hain jo Stitch / Figma design system mein diye the.
 class AppColors {
   AppColors._();
 
-  // ── Brand ────────────────────────────────────────────────────────────────
   static const Color primary = Color(0xFF6D4AFF); // Electric Violet
   static const Color primaryLight = Color(0xFF8B6BFF);
   static const Color ink = Color(0xFF0E1020);
 
-  // ── Status / accents ─────────────────────────────────────────────────────
   static const Color mint = Color(0xFF2DE2A6); // success, positive growth
   static const Color mintDark = Color(0xFF0FA67A); // success text on light bg
   static const Color coral = Color(0xFFFF5C6C); // danger, End Shift, refund
   static const Color amber = Color(0xFFFFB547); // held, low stock
   static const Color sky = Color(0xFF4CC9F0); // UPI / online
 
-  // ── Soft (tinted) backgrounds for chips and icon chips ───────────────────
   static const Color primarySoft = Color(0xFFEFEBFF);
   static const Color mintSoft = Color(0xFFE8FBF4);
   static const Color coralSoft = Color(0xFFFFEBED);
@@ -59,8 +55,6 @@ class AppColors {
   );
 }
 
-/// Theme ke saath badalne wale (light/dark) colors.
-/// Use: `context.palette.surface`, `context.palette.textSecondary`
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
   const AppPalette({

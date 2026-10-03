@@ -1,16 +1,9 @@
 import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:shopzo_pos/core/errors/failure.dart';
 import 'package:shopzo_pos/model/product_model.dart';
 import 'package:shopzo_pos/utils/app_utils.dart';
-
 import '../repo/product_repo.dart';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Filter
-// ═══════════════════════════════════════════════════════════════════════════
 
 enum ProductFilter {
   all('All'),
@@ -35,10 +28,6 @@ enum ProductFilter {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// State
-// ═══════════════════════════════════════════════════════════════════════════
-
 class ProductState {
   const ProductState({
     this.items = const <ProductModel>[],
@@ -52,26 +41,17 @@ class ProductState {
     this.filter = ProductFilter.all,
   });
 
-  /// Ab tak load hue products (saare pages jod kar).
   final List<ProductModel> items;
   final int page;
   final int totalPages;
-
-  /// Server ke hisaab se kul products.
   final int total;
-
-  /// Pehli baar / naya load: skeleton dikhta hai.
   final bool isLoading;
   final bool isLoadingMore;
   final Failure? failure;
   final String search;
   final ProductFilter filter;
-
   bool get hasMore => page < totalPages;
 
-  /// Filter + search lagakar jo list dikhani hai.
-  /// Search yahan local bhi chalta hai, taaki type karte hi turant result dikhe
-  /// (server ka result baad mein aakar list badal deta hai).
   List<ProductModel> get visible {
     final String q = search.trim().toLowerCase();
     return items.where((ProductModel p) {
@@ -81,9 +61,7 @@ class ProductState {
     }).toList();
   }
 
-  /// Load hue products mein se kitne is filter mein aate hain.
   int count(ProductFilter f) => items.where(f.matches).length;
-
   ProductState copyWith({
     List<ProductModel>? items,
     int? page,
@@ -110,16 +88,10 @@ class ProductState {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ViewModel
-// ═══════════════════════════════════════════════════════════════════════════
-
 class ProductViewModel extends Notifier<ProductState> {
   static const int _limit = 20;
-
   int _requestId = 0;
   Timer? _debounce;
-
   ProductRepository get _repo => ref.read(productRepositoryProvider);
 
   @override
@@ -134,7 +106,6 @@ class ProductViewModel extends Notifier<ProductState> {
     state = state.copyWith(filter: filter);
   }
 
-  /// Type karte hi local filter turant chalta hai; server call 400ms ruk kar.
   void setSearch(String value) {
     if (value == state.search) return;
     state = state.copyWith(search: value);
@@ -142,11 +113,8 @@ class ProductViewModel extends Notifier<ProductState> {
     _debounce = Timer(const Duration(milliseconds: 400), () => load(refresh: true));
   }
 
-  /// [refresh] true (pull-to-refresh / search) ho to purani list screen par
-  /// rehti hai, skeleton nahi aata.
   Future<void> load({bool refresh = false}) async {
     final int id = ++_requestId;
-
     if (!refresh) {
       state = state.copyWith(
         isLoading: true,
@@ -161,10 +129,7 @@ class ProductViewModel extends Notifier<ProductState> {
 
     final ApiResult<ProductPage> result =
     await _repo.getProducts(page: 1, limit: _limit, search: state.search);
-
-    // Beech mein naya load shuru ho gaya ya screen band ho gayi.
     if (!ref.mounted || id != _requestId) return;
-
     final ProductPage? data = result.dataOrNull;
     if (data != null) {
       state = state.copyWith(
@@ -181,7 +146,6 @@ class ProductViewModel extends Notifier<ProductState> {
 
     final Failure failure = result.failureOrNull!;
     if (state.items.isNotEmpty) {
-      // Purani list hai: bubble dikhao, screen mat todo.
       AppUtils.showFailure(failure);
       state = state.copyWith(isLoading: false, isLoadingMore: false);
     } else {
@@ -193,13 +157,10 @@ class ProductViewModel extends Notifier<ProductState> {
     }
   }
 
-  /// Agla page (scroll ke end par ya "Load more" button se).
   Future<void> loadMore() async {
     if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
-
     final int id = _requestId;
     state = state.copyWith(isLoadingMore: true);
-
     final ApiResult<ProductPage> result = await _repo.getProducts(
       page: state.page + 1,
       limit: _limit,
@@ -207,15 +168,12 @@ class ProductViewModel extends Notifier<ProductState> {
     );
 
     if (!ref.mounted || id != _requestId) return;
-
     final ProductPage? data = result.dataOrNull;
     if (data == null) {
       AppUtils.showFailure(result.failureOrNull!);
       state = state.copyWith(isLoadingMore: false);
       return;
     }
-
-    // Duplicate (same id) dobara na judein.
     final Set<String> known = state.items.map((ProductModel p) => p.id).toSet();
     state = state.copyWith(
       isLoadingMore: false,

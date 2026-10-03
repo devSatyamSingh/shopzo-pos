@@ -1,6 +1,5 @@
 import 'user_model.dart';
 
-
 class LoginResponseModel {
   const LoginResponseModel({
     required this.user,
@@ -11,7 +10,6 @@ class LoginResponseModel {
   final UserModel user;
   final String accessToken;
   final String refreshToken;
-
 
   factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
     final dynamic userJson = json['user'];

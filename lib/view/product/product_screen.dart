@@ -7,100 +7,11 @@ import 'package:shopzo_pos/viewmodel/product_viewmodel.dart';
 import 'package:shopzo_pos/widget/app_button.dart';
 import 'package:shopzo_pos/widget/app_colors.dart';
 import 'package:shopzo_pos/widget/app_dimens.dart';
-// ⚠️ File ka naam apne project ke hisaab se check kar lena.
 import 'package:shopzo_pos/widget/app_error_view.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 import '../../utils/responsive.dart';
 import '../../widget/app_textfield.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Helpers
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// 285 -> ₹285 , 145.5 -> ₹145.50 , 124500 -> ₹1,24,500
-String _inr(double value) {
-  final bool whole = value % 1 == 0;
-  final List<String> parts = value.toStringAsFixed(whole ? 0 : 2).split('.');
-  String digits = parts[0];
-  if (digits.length > 3) {
-    final String last3 = digits.substring(digits.length - 3);
-    final String rest = digits
-        .substring(0, digits.length - 3)
-        .replaceAllMapped(RegExp(r'(\d+?)(?=(\d{2})+$)'), (Match m) => '${m[1]},');
-    digits = '$rest,$last3';
-  }
-  return '₹$digits${parts.length > 1 ? '.${parts[1]}' : ''}';
-}
-
-const Color _amberText = Color(0xFFE08A00);
-
-const List<List<Color>> _avatarColors = <List<Color>>[
-  <Color>[AppColors.primarySoft, AppColors.primary],
-  <Color>[AppColors.skySoft, Color(0xFF0E9FC4)],
-  <Color>[AppColors.mintSoft, AppColors.mintDark],
-  <Color>[AppColors.amberSoft, _amberText],
-  <Color>[AppColors.coralSoft, AppColors.coral],
-];
-
-/// Mobile pe chhota, tablet pe thoda bada text. Color automatic (light/dark).
-class _Txt extends StatelessWidget {
-  const _Txt(
-      this.text,
-      this.base, {
-        required this.m,
-        this.t,
-        this.color,
-        this.secondary = false,
-        this.weight,
-        this.maxLines,
-        this.align,
-        this.tabular = false,
-      });
-
-  final String text;
-  final TextStyle base;
-  final double m;
-  final double? t;
-  final Color? color;
-  final bool secondary;
-  final FontWeight? weight;
-  final int? maxLines;
-  final TextAlign? align;
-  final bool tabular;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppPalette p = context.palette;
-    return Text(
-      text,
-      maxLines: maxLines,
-      textAlign: align,
-      overflow: maxLines != null ? TextOverflow.ellipsis : null,
-      style: base.copyWith(
-        fontSize: context.isTablet ? (t ?? m + 2) : m,
-        color: color ?? (secondary ? p.textSecondary : p.textPrimary),
-        fontWeight: weight,
-        fontFeatures: tabular
-            ? const <FontFeature>[FontFeature.tabularFigures()]
-            : null,
-      ),
-    );
-  }
-}
-
-SliverGridDelegateWithMaxCrossAxisExtent _gridDelegate(BuildContext context) {
-  final bool m = context.isMobile;
-  return SliverGridDelegateWithMaxCrossAxisExtent(
-    maxCrossAxisExtent: 480,
-    mainAxisExtent: m ? 104 : 120,
-    mainAxisSpacing: m ? 10 : 12,
-    crossAxisSpacing: 14,
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Screen
-// ═══════════════════════════════════════════════════════════════════════════
 
 class ProductListScreen extends ConsumerStatefulWidget {
   const ProductListScreen({super.key});
@@ -127,7 +38,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     super.dispose();
   }
 
-  /// End ke paas pahunchte hi agla page.
   void _onScroll() {
     if (!_scroll.hasClients) return;
     final ScrollPosition p = _scroll.position;
@@ -158,17 +68,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      _Txt('Products', AppTextStyles.h1, m: 20, t: 26),
+                      _Txt('Products', AppTextStyles.h1, m: 19, t: 24),
                       const SizedBox(height: 2),
-                      _Txt(
-                        state.isLoading
-                            ? 'Loading your products…'
-                            : '${state.total} products in your shop',
-                        AppTextStyles.body,
-                        m: 12,
-                        t: 14,
-                        secondary: true,
-                      ),
                       SizedBox(height: m ? 12 : 16),
                       Row(
                         children: <Widget>[
@@ -278,9 +179,84 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Top widgets
-// ═══════════════════════════════════════════════════════════════════════════
+String _inr(double value) {
+  final bool whole = value % 1 == 0;
+  final List<String> parts = value.toStringAsFixed(whole ? 0 : 2).split('.');
+  String digits = parts[0];
+  if (digits.length > 3) {
+    final String last3 = digits.substring(digits.length - 3);
+    final String rest = digits
+        .substring(0, digits.length - 3)
+        .replaceAllMapped(RegExp(r'(\d+?)(?=(\d{2})+$)'), (Match m) => '${m[1]},');
+    digits = '$rest,$last3';
+  }
+  return '₹$digits${parts.length > 1 ? '.${parts[1]}' : ''}';
+}
+
+const Color _amberText = Color(0xFFE08A00);
+
+const List<List<Color>> _avatarColors = <List<Color>>[
+  <Color>[AppColors.primarySoft, AppColors.primary],
+  <Color>[AppColors.skySoft, Color(0xFF0E9FC4)],
+  <Color>[AppColors.mintSoft, AppColors.mintDark],
+  <Color>[AppColors.amberSoft, _amberText],
+  <Color>[AppColors.coralSoft, AppColors.coral],
+];
+
+class _Txt extends StatelessWidget {
+  const _Txt(
+      this.text,
+      this.base, {
+        required this.m,
+        this.t,
+        this.color,
+        this.secondary = false,
+        this.weight,
+        this.maxLines,
+        this.align,
+        this.tabular = false,
+      });
+
+  final String text;
+  final TextStyle base;
+  final double m;
+  final double? t;
+  final Color? color;
+  final bool secondary;
+  final FontWeight? weight;
+  final int? maxLines;
+  final TextAlign? align;
+  final bool tabular;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette p = context.palette;
+    return Text(
+      text,
+      maxLines: maxLines,
+      textAlign: align,
+      overflow: maxLines != null ? TextOverflow.ellipsis : null,
+      style: base.copyWith(
+        fontSize: context.isTablet ? (t ?? m + 2) : m,
+        color: color ?? (secondary ? p.textSecondary : p.textPrimary),
+        fontWeight: weight,
+        fontFeatures: tabular
+            ? const <FontFeature>[FontFeature.tabularFigures()]
+            : null,
+      ),
+    );
+  }
+}
+
+SliverGridDelegateWithMaxCrossAxisExtent _gridDelegate(BuildContext context) {
+  final bool m = context.isMobile;
+  return SliverGridDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: 480,
+    mainAxisExtent: m ? 104 : 120,
+    mainAxisSpacing: m ? 10 : 12,
+    crossAxisSpacing: 14,
+  );
+}
 
 class _SummaryTile extends StatelessWidget {
   const _SummaryTile({
@@ -389,10 +365,6 @@ class _FilterChips extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Product card
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _ProductCard extends StatelessWidget {
   const _ProductCard({
@@ -563,7 +535,6 @@ Widget _stockPill(StockLevel level, bool dark) {
   }
 }
 
-/// Network image; image na ho ya load fail ho to naam ka pehla akshar.
 class _ProductImage extends StatelessWidget {
   const _ProductImage({
     required this.url,
@@ -651,9 +622,6 @@ class _Pill extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Footer / empty
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _ListFooter extends StatelessWidget {
   const _ListFooter({
@@ -739,9 +707,6 @@ class _EmptyView extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Variants bottom sheet
-// ═══════════════════════════════════════════════════════════════════════════
 
 void _showVariants(BuildContext context, ProductModel product) {
   showModalBottomSheet<void>(
@@ -865,10 +830,6 @@ class _VariantsSheet extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Loading skeleton (shimmer)
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _Bone extends StatelessWidget {
   const _Bone({this.width, required this.height, this.radius = 6});

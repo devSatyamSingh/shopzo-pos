@@ -38,16 +38,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   );
 
   bool _remember = false;
-
-  // Ye dono build() mein authViewModel se sync hote hain.
   bool _isLoading = false;
   Failure? _failure;
-
   String? get _error => _failure?.message;
-
-  bool get _filled =>
-      _phone.text.trim().length == 10 && _password.text.isNotEmpty;
-
+  bool get _filled => _phone.text.trim().length == 10 && _password.text.isNotEmpty;
   _BadgeKind get _kind => _isLoading
       ? _BadgeKind.loading
       : _error != null
@@ -62,7 +56,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return 'Sign in to start your shift';
   }
 
-  /// Error ke type ke hisaab se chhota hint.
   String? get _errorHint {
     final Failure? f = _failure;
     if (f == null) return null;
@@ -95,12 +88,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     super.dispose();
   }
 
-  // ── Actions ──────────────────────────────────────────────────────────────
-
-  /// "Remember me" se pichli baar ka number wapas bhar do.
   Future<void> _prefillRememberedPhone() async {
-    final String? phone =
-    await ref.read(authViewModelProvider.notifier).rememberedPhone();
+    final String? phone = await ref
+        .read(authViewModelProvider.notifier)
+        .rememberedPhone();
     if (!mounted || phone == null || _phone.text.isNotEmpty) return;
     setState(() {
       _phone.text = phone;
@@ -109,7 +100,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _onChanged() {
-    // Badge state (filled / idle) refresh + purana error hatao.
     ref.read(authViewModelProvider.notifier).clearError();
     setState(() {});
   }
@@ -118,42 +108,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     AppUtils.hideKeyboard();
     if (_isLoading || !(_formKey.currentState?.validate() ?? false)) return;
 
-    final ApiResult<UserModel> result =
-    await ref.read(authViewModelProvider.notifier).login(
-      phone: _phone.text,
-      password: _password.text,
-      rememberMe: _remember,
-    );
-
-    // Server ka exact message + status code. AppUtils global hai, isliye
-    // screen hat bhi jaye (redirect ke baad) tab bhi bubble dikhta hai.
+    final ApiResult<UserModel> result = await ref
+        .read(authViewModelProvider.notifier)
+        .login(
+          phone: _phone.text,
+          password: _password.text,
+          rememberMe: _remember,
+        );
     AppUtils.showResult(result, successFallback: 'Login successful');
-
     if (!mounted) return;
     if (result.isSuccess) context.go(AppRoutes.home);
   }
-
-  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final AuthState auth = ref.watch(authViewModelProvider);
     _isLoading = auth.isLoading;
     _failure = auth.failure;
-
-    // Naya error aaye to form hilao + vibrate.
-    ref.listen<AuthState>(authViewModelProvider,
-            (AuthState? previous, AuthState next) {
-          if (next.failure != null && next.failure != previous?.failure) {
-            _shake.forward(from: 0);
-            HapticFeedback.mediumImpact();
-          }
-        });
+    ref.listen<AuthState>(authViewModelProvider, (
+      AuthState? previous,
+      AuthState next,
+    ) {
+      if (next.failure != null && next.failure != previous?.failure) {
+        _shake.forward(from: 0);
+        HapticFeedback.mediumImpact();
+      }
+    });
 
     final AppPalette palette = context.palette;
-    // Tablet landscape = split screen. Baaki sab = hero + sheet.
     final bool wide = context.isTablet && context.isLandscape;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: wide && !palette.isDark
           ? SystemUiOverlayStyle.dark
@@ -163,18 +146,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         body: wide
             ? _buildWide(palette)
             : LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints box) =>
-              _buildMobile(palette, box),
-        ),
+                builder: (BuildContext context, BoxConstraints box) =>
+                    _buildMobile(palette, box),
+              ),
       ),
     );
   }
 
-  /// Phone + tablet portrait.
   Widget _buildMobile(AppPalette palette, BoxConstraints box) {
     final EdgeInsets inset = MediaQuery.paddingOf(context);
-    final double heroHeight =
-    (box.maxHeight * 0.40).clamp(270.0, 400.0).toDouble();
+    final double heroHeight = (box.maxHeight * 0.40)
+        .clamp(270.0, 400.0)
+        .toDouble();
 
     return Stack(
       children: <Widget>[
@@ -207,8 +190,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                           ),
                         ),
-                        const AppText.display('Welcome back',
-                            color: Colors.white),
+                        const AppText.display(
+                          'Welcome back',
+                          color: Colors.white,
+                        ),
                         const SizedBox(height: 4),
                         AppText(
                           _subtitle,
@@ -220,7 +205,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
                 ),
               ),
-              // Form sheet
               Container(
                 width: double.infinity,
                 constraints: BoxConstraints(
@@ -277,8 +261,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           padding: const EdgeInsets.all(32),
                           decoration: BoxDecoration(
                             color: palette.surface,
-                            borderRadius:
-                            BorderRadius.circular(AppRadius.sheet),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.sheet,
+                            ),
                             border: Border.all(color: palette.border),
                             boxShadow: <BoxShadow>[
                               BoxShadow(
@@ -294,11 +279,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             children: <Widget>[
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: palette.primarySoft,
-                                  borderRadius:
-                                  BorderRadius.circular(AppRadius.pill),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
                                 ),
                                 child: AppText.label(
                                   'TERMINAL LOGIN',
@@ -351,13 +339,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               alignment: Alignment.topCenter,
               child: _error != null
                   ? Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _ErrorBanner(
-                  message: _error!,
-                  hint: _errorHint,
-                  statusCode: _failure?.statusCode,
-                ),
-              )
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _ErrorBanner(
+                        message: _error!,
+                        hint: _errorHint,
+                        statusCode: _failure?.statusCode,
+                      ),
+                    )
                   : const SizedBox(width: double.infinity),
             ),
             AppTextField.phone(
@@ -397,11 +385,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             value: _remember,
                             visualDensity: VisualDensity.compact,
                             materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
+                                MaterialTapTargetSize.shrinkWrap,
                             onChanged: _isLoading
                                 ? null
                                 : (bool? v) =>
-                                setState(() => _remember = v ?? false),
+                                      setState(() => _remember = v ?? false),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -426,8 +414,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   children: <InlineSpan>[
                     TextSpan(
                       text: 'Need access? ',
-                      style: AppTextStyles.caption
-                          .copyWith(color: palette.textSecondary),
+                      style: AppTextStyles.caption.copyWith(
+                        color: palette.textSecondary,
+                      ),
                     ),
                     TextSpan(
                       text: 'Contact your admin',
@@ -605,21 +594,21 @@ class _HeroBadge extends StatelessWidget {
           child: Center(
             child: loading
                 ? SizedBox(
-              width: size * 0.38,
-              height: size * 0.38,
-              child: const CircularProgressIndicator(
-                strokeWidth: 3,
-                strokeCap: StrokeCap.round,
-                color: Colors.white,
-              ),
-            )
+                    width: size * 0.38,
+                    height: size * 0.38,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 3,
+                      strokeCap: StrokeCap.round,
+                      color: Colors.white,
+                    ),
+                  )
                 : Icon(
-              kind == _BadgeKind.error
-                  ? Icons.error_outline_rounded
-                  : Icons.shopping_bag_outlined,
-              size: size * 0.42,
-              color: Colors.white,
-            ),
+                    kind == _BadgeKind.error
+                        ? Icons.error_outline_rounded
+                        : Icons.shopping_bag_outlined,
+                    size: size * 0.42,
+                    color: Colors.white,
+                  ),
           ),
         ),
         if (!loading)
@@ -651,11 +640,7 @@ class _HeroBadge extends StatelessWidget {
 
 /// Server ka exact message + (optional) hint + status code.
 class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({
-    required this.message,
-    this.hint,
-    this.statusCode,
-  });
+  const _ErrorBanner({required this.message, this.hint, this.statusCode});
 
   final String message;
   final String? hint;
@@ -675,8 +660,11 @@ class _ErrorBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.error_outline_rounded,
-              color: AppColors.coral, size: 22),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.coral,
+            size: 22,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -739,8 +727,9 @@ class _BrandPanel extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           text,
-          style: AppTextStyles.caption
-              .copyWith(color: AppColors.darkTextSecondary),
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.darkTextSecondary,
+          ),
         ),
       ],
     );
@@ -789,14 +778,20 @@ class _BrandPanel extends StatelessWidget {
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: <Widget>[
-                                    Text('P',
-                                        style: AppTextStyles.h1
-                                            .copyWith(color: Colors.white)),
+                                    Text(
+                                      'P',
+                                      style: AppTextStyles.h1.copyWith(
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                     const Positioned(
                                       right: 9,
                                       bottom: 8,
-                                      child: Icon(Icons.bolt_rounded,
-                                          size: 16, color: AppColors.mint),
+                                      child: Icon(
+                                        Icons.bolt_rounded,
+                                        size: 16,
+                                        color: AppColors.mint,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -805,9 +800,12 @@ class _BrandPanel extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  Text('Pulse POS',
-                                      style: AppTextStyles.h2
-                                          .copyWith(color: Colors.white)),
+                                  Text(
+                                    'Pulse POS',
+                                    style: AppTextStyles.h2.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                   Text(
                                     'ENTERPRISE TERMINAL',
                                     style: AppTextStyles.label.copyWith(
@@ -827,10 +825,12 @@ class _BrandPanel extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppColors.darkSurface
-                                    .withValues(alpha: 0.85),
-                                borderRadius:
-                                BorderRadius.circular(AppRadius.xl),
+                                color: AppColors.darkSurface.withValues(
+                                  alpha: 0.85,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xl,
+                                ),
                                 border: Border.all(
                                   color: Colors.white.withValues(alpha: 0.08),
                                 ),
@@ -878,13 +878,19 @@ class _BrandPanel extends StatelessWidget {
                                     children: <Widget>[
                                       _stat('ORDERS', '142'),
                                       const SizedBox(width: 8),
-                                      _stat('UPI RATE', '68%',
-                                          color: AppColors.sky),
+                                      _stat(
+                                        'UPI RATE',
+                                        '68%',
+                                        color: AppColors.sky,
+                                      ),
                                       const SizedBox(width: 8),
                                       _stat('SPEED', '1.2s'),
                                       const SizedBox(width: 8),
-                                      _stat('SHIFT', '#2',
-                                          color: AppColors.primaryLight),
+                                      _stat(
+                                        'SHIFT',
+                                        '#2',
+                                        color: AppColors.primaryLight,
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -905,11 +911,12 @@ class _BrandPanel extends StatelessWidget {
                               ),
                               const SizedBox(height: 10),
                               ConstrainedBox(
-                                constraints:
-                                const BoxConstraints(maxWidth: 400),
+                                constraints: const BoxConstraints(
+                                  maxWidth: 400,
+                                ),
                                 child: Text(
                                   'Fast billing, automated reconciliation and '
-                                      'seamless multi-cashier shift management.',
+                                  'seamless multi-cashier shift management.',
                                   style: AppTextStyles.body.copyWith(
                                     color: AppColors.darkTextSecondary,
                                   ),
@@ -920,10 +927,11 @@ class _BrandPanel extends StatelessWidget {
                                 spacing: 20,
                                 runSpacing: 8,
                                 children: <Widget>[
-                                  _note(Icons.lock_outline_rounded,
-                                      'Secure sign-in'),
-                                  _note(Icons.bolt_rounded,
-                                      'Realtime billing'),
+                                  _note(
+                                    Icons.lock_outline_rounded,
+                                    'Secure sign-in',
+                                  ),
+                                  _note(Icons.bolt_rounded, 'Realtime billing'),
                                 ],
                               ),
                             ],

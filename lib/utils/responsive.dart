@@ -25,8 +25,6 @@ extension ResponsiveContext on BuildContext {
       isTablet ? (tablet ?? mobile) : mobile;
 }
 
-/// Content ko tablet pe beech mein rakhta hai aur max width limit karta hai.
-/// Login form, settings, dialogs sab isi mein wrap karna.
 class ResponsiveCenter extends StatelessWidget {
   const ResponsiveCenter({
     super.key,
