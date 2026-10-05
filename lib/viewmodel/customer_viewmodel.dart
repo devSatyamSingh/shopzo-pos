@@ -16,8 +16,6 @@ class CustomerSearchState {
   final List<CustomerModel> results;
   final bool isLoading;
   final Failure? failure;
-
-  /// Itne digit type hone par hi search chalta hai.
   static const int minDigits = 3;
 
   bool get isSearching => query.length >= minDigits;
@@ -85,7 +83,6 @@ class CustomerSearchViewModel extends Notifier<CustomerSearchState> {
     state = const CustomerSearchState();
   }
 
-  /// Result wapas aata hai taaki UI server ka message / field errors dikha sake.
   Future<ApiResult<CustomerModel>> create({
     required String name,
     required String phone,
@@ -95,7 +92,6 @@ class CustomerSearchViewModel extends Notifier<CustomerSearchState> {
 }
 
 final NotifierProvider<CustomerSearchViewModel, CustomerSearchState>
-customerSearchProvider =
-NotifierProvider<CustomerSearchViewModel, CustomerSearchState>(
+customerSearchProvider = NotifierProvider<CustomerSearchViewModel, CustomerSearchState>(
   CustomerSearchViewModel.new,
 );

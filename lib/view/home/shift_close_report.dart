@@ -11,9 +11,6 @@ import 'package:shopzo_pos/widget/app_dimens.dart';
 import 'package:shopzo_pos/widget/app_text.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 
-/// Shift band hone ke turant baad dikhta hai: final report.
-/// Opened / closed date-time, duration, sales, aur cash ka hisaab (server ke
-/// expectedCash aur discrepancy ke saath). "Done" par Open Shift popup aata hai.
 class ShiftClosedReport extends ConsumerWidget {
   const ShiftClosedReport({super.key});
 
@@ -62,8 +59,6 @@ class ShiftClosedReport extends ConsumerWidget {
             secondary: true,
           ),
           const SizedBox(height: 18),
-
-          // Sales (agar load ho paye the)
           if (summary != null) ...<Widget>[
             Container(
               padding: const EdgeInsets.all(16),
@@ -89,8 +84,10 @@ class ShiftClosedReport extends ConsumerWidget {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             FormatUtils.inr(summary.totalSales),
-                            style: AppTextStyles.hero
-                                .copyWith(color: Colors.white, fontSize: 30),
+                            style: AppTextStyles.hero.copyWith(
+                              color: Colors.white,
+                              fontSize: 30,
+                            ),
                           ),
                         ),
                       ],

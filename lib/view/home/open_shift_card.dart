@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopzo_pos/core/errors/failure.dart';
@@ -18,8 +17,7 @@ import 'package:shopzo_pos/widget/app_text.dart';
 import 'package:shopzo_pos/widget/app_textfield.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 
-/// Login ke baad, agar koi shift open nahi hai to ye popup dikhta hai
-/// (admin, manager, cashier sabke liye). Opening cash daalkar shift start hoti hai.
+
 class OpenShiftCard extends ConsumerStatefulWidget {
   const OpenShiftCard({super.key});
 
@@ -55,7 +53,6 @@ class _OpenShiftCardState extends ConsumerState<OpenShiftCard> {
 
   void _pickQuick(int amount) {
     setState(() => _cash.text = '$amount');
-    // Quick chip se bhara ho to purana error hatao.
     _formKey.currentState?.validate();
   }
 
@@ -131,15 +128,6 @@ class _OpenShiftCardState extends ConsumerState<OpenShiftCard> {
               leadingIcon: Icons.play_arrow_rounded,
               isLoading: busy,
               onPressed: _submit,
-            ),
-            const SizedBox(height: 6),
-            AppButton(
-              label: 'Logout',
-              variant: AppButtonVariant.ghost,
-              size: AppButtonSize.medium,
-              onPressed: busy
-                  ? null
-                  : () => ref.read(authViewModelProvider.notifier).logout(),
             ),
             const SizedBox(height: 6),
             Center(

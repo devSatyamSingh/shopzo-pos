@@ -7,9 +7,7 @@ final receiptProvider = FutureProvider.autoDispose.family<Receipt, String>((
   Ref ref,
   String orderId,
 ) async {
-  final ApiResult<Receipt> result = await ref
-      .read(billingRepoProvider)
-      .getReceipt(orderId);
+  final ApiResult<Receipt> result = await ref.read(billingRepoProvider).getReceipt(orderId);
 
   final Receipt? data = result.dataOrNull;
   if (data != null) return data;

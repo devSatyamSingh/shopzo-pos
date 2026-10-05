@@ -80,6 +80,9 @@ class HeldViewModel extends Notifier<HeldState> {
   }
 
   Future<void> load({bool refresh = false}) async {
+    final AuthState auth = ref.read(authViewModelProvider);
+    if (!auth.isAuthenticated || auth.isLoading) return;
+
     final int id = ++_requestId;
     if (!refresh) {
       state = state.copyWith(isLoading: true, clearFailure: true);
@@ -91,15 +94,16 @@ class HeldViewModel extends Notifier<HeldState> {
     final List<HeldOrder>? data = result.dataOrNull;
     if (data != null) {
       final List<HeldOrder> held =
-          data.where((HeldOrder o) => o.isHeld).toList()..sort(
+      data.where((HeldOrder o) => o.isHeld).toList()..sort(
             (HeldOrder a, HeldOrder b) => (b.createdAt ?? DateTime(2000))
-                .compareTo(a.createdAt ?? DateTime(2000)),
-          );
+            .compareTo(a.createdAt ?? DateTime(2000)),
+      );
       state = state.copyWith(isLoading: false, clearFailure: true, items: held);
       return;
     }
 
     final Failure failure = result.failureOrNull!;
+    if (!ref.read(authViewModelProvider).isAuthenticated) return;
     if (state.items.isNotEmpty) {
       AppUtils.showFailure(failure);
       state = state.copyWith(isLoading: false);
@@ -107,7 +111,6 @@ class HeldViewModel extends Notifier<HeldState> {
       state = state.copyWith(isLoading: false, failure: failure);
     }
   }
-
   Future<ApiResult<HeldOrder>> holdCart({String? note}) async {
     final BillingState b = ref.read(billingViewModelProvider);
     if (state.isHolding) {

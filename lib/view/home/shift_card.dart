@@ -8,8 +8,6 @@ import 'package:shopzo_pos/widget/app_dimens.dart';
 import 'package:shopzo_pos/widget/app_text.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 
-/// Popup / dialog ka common card: round corner, soft shadow, andar scroll
-/// (chhoti screen ya keyboard khulne par content scroll hota hai).
 class ShiftCardShell extends StatelessWidget {
   const ShiftCardShell({super.key, required this.child, this.maxWidth = 460});
 
@@ -48,7 +46,6 @@ class ShiftCardShell extends StatelessWidget {
   }
 }
 
-/// Gol icon (card ke upar).
 class ShiftHeaderIcon extends StatelessWidget {
   const ShiftHeaderIcon({
     super.key,
@@ -75,7 +72,6 @@ class ShiftHeaderIcon extends StatelessWidget {
   }
 }
 
-/// Server ka error inline dikhane ke liye (bubble ke saath).
 class ShiftErrorBanner extends StatelessWidget {
   const ShiftErrorBanner({super.key, required this.message, this.statusCode});
 

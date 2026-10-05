@@ -7,7 +7,6 @@ class Breakpoints {
 
   static const double tablet = 600;
 
-  /// Form / card jaisi cheezon ki max width tablet pe.
   static const double formMaxWidth = 520;
   static const double contentMaxWidth = 1100;
 }
@@ -19,8 +18,6 @@ extension ResponsiveContext on BuildContext {
   bool get isMobile => !isTablet;
   bool get isLandscape => screen.width > screen.height;
 
-  /// Mobile aur tablet ke liye alag value.
-  /// `context.responsive(mobile: 16.0, tablet: 24.0)`
   T responsive<T>({required T mobile, T? tablet}) =>
       isTablet ? (tablet ?? mobile) : mobile;
 }

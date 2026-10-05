@@ -14,16 +14,6 @@ import 'package:shopzo_pos/widget/app_text.dart';
 import 'open_shift_card.dart';
 
 
-/// Home ko iske andar lapet do:  `ShiftGate(child: MainShellScreen())`
-///
-/// Login ke baad (admin, manager, cashier sabke liye) dashboard ke upar,
-/// jab tak shift open na ho, blur ke saath popup aata hai:
-///  - shift check ho raha hai  -> "Checking your shift..."
-///  - open shift nahi hai      -> Open Shift popup (opening cash)
-///  - shift abhi close hui     -> Shift closed report
-///  - check fail (net/server)  -> error + Retry / Logout
-/// Shift open hote hi popup hat jata hai. App background se wapas aane par
-/// shift server se dobara sync hota hai.
 class ShiftGate extends ConsumerStatefulWidget {
   const ShiftGate({super.key, required this.child});
 
@@ -49,14 +39,12 @@ class _ShiftGateState extends ConsumerState<ShiftGate>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Shift kisi aur device / website se band hui ho to yahan bhi pata chale.
     if (state == AppLifecycleState.resumed) {
       ref.read(shiftViewModelProvider.notifier).refreshActive(silent: true);
     }
   }
 
   Widget? _cardFor(ShiftState s) {
-    // Close ke turant baad pehle report dikhao.
     if (s.closedShift != null) {
       return const ShiftClosedReport(key: ValueKey<String>('closed'));
     }
@@ -114,7 +102,6 @@ class _ShiftGateState extends ConsumerState<ShiftGate>
   }
 }
 
-/// Blur + dim barrier (neeche ka dashboard tap nahi hota) aur card ko beech me rakhta hai.
 class _Backdrop extends StatelessWidget {
   const _Backdrop({super.key, required this.child});
 
@@ -174,7 +161,6 @@ class _CheckingCard extends StatelessWidget {
   }
 }
 
-/// Shift check hi nahi ho paya: server ka message + Retry / Logout.
 class _ErrorCard extends ConsumerWidget {
   const _ErrorCard({super.key, required this.failure});
 

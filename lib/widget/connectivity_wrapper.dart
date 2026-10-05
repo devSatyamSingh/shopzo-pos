@@ -72,8 +72,7 @@ class _ConnectivityWrapperState extends ConsumerState<ConnectivityWrapper>
   @override
   Widget build(BuildContext context) {
     ref.listen<NetworkStatus>(networkStatusProvider, _onStatusChanged);
-    final bool offline =
-        ref.watch(networkStatusProvider) == NetworkStatus.offline;
+    final bool offline = ref.watch(networkStatusProvider) == NetworkStatus.offline;
     final bool showBanner = offline || _showBackOnline;
     final double topInset = MediaQuery.of(context).padding.top;
 

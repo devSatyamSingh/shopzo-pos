@@ -15,14 +15,6 @@ import 'package:shopzo_pos/widget/app_text.dart';
 import 'package:shopzo_pos/widget/app_textfield.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 
-/// "End shift" popup.
-///
-/// Dashboard ke End shift button par: `CloseShiftDialog.show(context)`
-///
-/// Dikhata hai: kab open hua, kitni der se open hai, is shift ki sales
-/// (orders, total, cash / UPI...), expected cash. User drawer ka counted cash
-/// daalta hai, live dikhta hai ki cash match / extra / short hai. Close hone par
-/// server ka final report ("Shift closed") gate dikhata hai.
 class CloseShiftDialog extends ConsumerStatefulWidget {
   const CloseShiftDialog({super.key});
 
@@ -47,7 +39,7 @@ class _CloseShiftDialogState extends ConsumerState<CloseShiftDialog> {
   void initState() {
     super.initState();
     Future<void>.microtask(
-          () => ref.read(shiftViewModelProvider.notifier).loadSummary(),
+      () => ref.read(shiftViewModelProvider.notifier).loadSummary(),
     );
   }
 
@@ -59,8 +51,6 @@ class _CloseShiftDialogState extends ConsumerState<CloseShiftDialog> {
 
   double? get _entered =>
       double.tryParse(_cash.text.replaceAll(',', '').trim());
-
-  /// Ek hi baar pop ho (double pop se doosra route na hat jaye).
   void _closeDialog() {
     if (_closed || !mounted) return;
     _closed = true;
@@ -73,10 +63,9 @@ class _CloseShiftDialogState extends ConsumerState<CloseShiftDialog> {
     final double? amount = _entered;
     if (amount == null) return;
 
-    final ApiResult<Shift> result =
-    await ref.read(shiftViewModelProvider.notifier).closeShift(amount);
-
-    // Server ka message ("Shift closed") + status code, ya error.
+    final ApiResult<Shift> result = await ref
+        .read(shiftViewModelProvider.notifier)
+        .closeShift(amount);
     AppUtils.showResult(result, successFallback: 'Shift closed');
     if (result.isSuccess) _closeDialog();
   }
@@ -85,8 +74,6 @@ class _CloseShiftDialogState extends ConsumerState<CloseShiftDialog> {
   Widget build(BuildContext context) {
     final ShiftState s = ref.watch(shiftViewModelProvider);
     final Shift? shift = s.shift;
-
-    // Shift pehle hi band ho gayi (kahin aur se): popup band.
     if (shift == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _closeDialog());
       return const SizedBox.shrink();
@@ -158,14 +145,14 @@ class _CloseShiftDialogState extends ConsumerState<CloseShiftDialog> {
                   alignment: Alignment.topLeft,
                   child: (entered != null && expected != null)
                       ? Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: CashDifferenceBadge(
-                        difference: entered - expected,
-                      ),
-                    ),
-                  )
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: CashDifferenceBadge(
+                              difference: entered - expected,
+                            ),
+                          ),
+                        )
                       : const SizedBox(width: double.infinity),
                 ),
                 AnimatedSize(
@@ -173,12 +160,12 @@ class _CloseShiftDialogState extends ConsumerState<CloseShiftDialog> {
                   alignment: Alignment.topCenter,
                   child: s.failure != null
                       ? Padding(
-                    padding: const EdgeInsets.only(top: 14),
-                    child: ShiftErrorBanner(
-                      message: s.failure!.message,
-                      statusCode: s.failure!.statusCode,
-                    ),
-                  )
+                          padding: const EdgeInsets.only(top: 14),
+                          child: ShiftErrorBanner(
+                            message: s.failure!.message,
+                            statusCode: s.failure!.statusCode,
+                          ),
+                        )
                       : const SizedBox(width: double.infinity),
                 ),
                 const SizedBox(height: 20),
@@ -345,8 +332,9 @@ class _SalesBlock extends StatelessWidget {
             children: <Widget>[
               Text(
                 'Total sales this shift',
-                style: AppTextStyles.body
-                    .copyWith(color: Colors.white.withValues(alpha: 0.85)),
+                style: AppTextStyles.body.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
               ),
               const SizedBox(height: 4),
               TweenAnimationBuilder<double>(
@@ -370,8 +358,9 @@ class _SalesBlock extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '${summary.orderCount} orders  •  Avg ${FormatUtils.inr(summary.avgOrderValue)}',
-                style: AppTextStyles.caption
-                    .copyWith(color: Colors.white.withValues(alpha: 0.80)),
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.white.withValues(alpha: 0.80),
+                ),
               ),
             ],
           ),
@@ -450,8 +439,11 @@ class _SummaryError extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          const Icon(Icons.info_outline_rounded,
-              color: Color(0xFFE08A00), size: 22),
+          const Icon(
+            Icons.info_outline_rounded,
+            color: Color(0xFFE08A00),
+            size: 22,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

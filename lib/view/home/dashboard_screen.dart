@@ -14,9 +14,14 @@ import 'package:shopzo_pos/widget/app_dimens.dart';
 import 'package:shopzo_pos/widget/app_error_view.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 import '../../model/dashboard_model.dart';
+import '../../model/permission_model.dart';
 import '../../model/user_model.dart';
 import '../../utils/responsive.dart';
+import '../../viewmodel/access_viewmodel.dart';
+import '../../widget/permission_guard.dart';
+import '../profile_screen.dart';
 import 'close_sfit_card.dart';
+import 'dart:async';
 
 
 class DashboardScreen extends ConsumerWidget {
@@ -46,7 +51,10 @@ class DashboardScreen extends ConsumerWidget {
           final double gap = m ? 12 : 15;
 
           return RefreshIndicator(
-            onRefresh: () => vm.load(refresh: true),
+            onRefresh: () async {
+              unawaited(ref.read(accessViewModelProvider.notifier).refresh());
+              await vm.load(refresh: true);
+            },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.symmetric(
@@ -60,6 +68,9 @@ class DashboardScreen extends ConsumerWidget {
                   children: <Widget>[
                     _Header(
                       user: user,
+                      onProfileTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+                      ),
                       onEndShift: () {
                         if (ref.read(hasOpenShiftProvider)) {
                           showCloseShiftDialog(context);
@@ -76,7 +87,11 @@ class DashboardScreen extends ConsumerWidget {
                       onChanged: vm.setPeriod,
                     ),
                     SizedBox(height: gap),
-                    _buildBody(state, vm, wide),
+                    PermissionGuard(
+                      permission: PermKey.dashboardView,
+                      loading: _DashboardSkeleton(wide: wide),
+                      child: _buildBody(state, vm, wide),
+                    ),
                   ],
                 ),
               ),
@@ -432,10 +447,12 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.user,
     required this.onEndShift,
+    required this.onProfileTap,
   });
 
   final UserModel? user;
   final VoidCallback onEndShift;
+  final VoidCallback onProfileTap;
 
   @override
   Widget build(BuildContext context) {
@@ -451,63 +468,97 @@ class _Header extends StatelessWidget {
 
     return Row(
       children: <Widget>[
-        Container(
-          width: m ? 39 : 50,
-          height: m ? 39 : 50,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            shape: BoxShape.circle,
-          ),
-          child: _Txt(
-            name.substring(0, 1).toUpperCase(),
-            AppTextStyles.h2,
-            m: 15,
-            t: 19,
-            color: Colors.white,
-          ),
-        ),
-        SizedBox(width: m ? 10 : 12),
+        // Profile area: avatar + greeting + name + role (tap = profile screen)
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              _Txt(_greeting(), AppTextStyles.body, m: 12, t: 14, secondary: true),
-              Row(
-                children: <Widget>[
-                  Flexible(
-                    child: _Txt(
-                      name,
-                      AppTextStyles.title,
-                      m: 15,
-                      t: 18,
-                      maxLines: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: palette.primarySoft,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      role,
-                      style: AppTextStyles.label.copyWith(
-                        color: palette.isDark
-                            ? AppColors.primaryLight
-                            : AppColors.primary,
-                        fontSize: m ? 9 : 10,
-                        letterSpacing: 0.8,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              onTap: onProfileTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: <Widget>[
+                    Container(
+                      width: m ? 39 : 50,
+                      height: m ? 39 : 50,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: _Txt(
+                        name.substring(0, 1).toUpperCase(),
+                        AppTextStyles.h2,
+                        m: 15,
+                        t: 19,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(width: m ? 10 : 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          _Txt(
+                            _greeting(),
+                            AppTextStyles.body,
+                            m: 12,
+                            t: 14,
+                            secondary: true,
+                          ),
+                          Row(
+                            children: <Widget>[
+                              Flexible(
+                                child: _Txt(
+                                  name,
+                                  AppTextStyles.title,
+                                  m: 15,
+                                  t: 18,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: palette.primarySoft,
+                                  borderRadius:
+                                  BorderRadius.circular(AppRadius.pill),
+                                ),
+                                child: Text(
+                                  role,
+                                  style: AppTextStyles.label.copyWith(
+                                    color: palette.isDark
+                                        ? AppColors.primaryLight
+                                        : AppColors.primary,
+                                    fontSize: m ? 9 : 10,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: m ? 18 : 20,
+                      color: palette.textHint,
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
+        const SizedBox(width: 8),
+        // End shift button (pehle jaisa)
         Material(
           color: palette.isDark
               ? AppColors.coral.withAlpha(30)
@@ -524,8 +575,11 @@ class _Header extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Icon(Icons.logout_rounded,
-                      size: m ? 14 : 16, color: AppColors.coral),
+                  Icon(
+                    Icons.logout_rounded,
+                    size: m ? 14 : 16,
+                    color: AppColors.coral,
+                  ),
                   const SizedBox(width: 5),
                   Text(
                     'End shift',

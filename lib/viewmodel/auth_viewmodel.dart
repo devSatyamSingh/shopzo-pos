@@ -40,11 +40,6 @@ class AuthState {
   }
 }
 
-/// Login, logout, session check aur session expiry yahin se.
-///
-/// UI mein:
-///   final auth = ref.watch(authViewModelProvider);
-///   ref.read(authViewModelProvider.notifier).login(...);
 class AuthViewModel extends Notifier<AuthState> {
   bool _loggingOut = false;
 
@@ -122,8 +117,6 @@ class AuthViewModel extends Notifier<AuthState> {
     }
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
-
-  // ── Session expiry (refresh token fail) ──────────────────────────────────
 
   Future<void> _handleSessionExpired() async {
     if (_loggingOut || state.status != AuthStatus.authenticated) return;

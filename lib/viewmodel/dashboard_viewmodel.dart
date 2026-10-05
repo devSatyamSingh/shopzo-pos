@@ -7,6 +7,7 @@ import 'package:shopzo_pos/model/dashboard_model.dart';
 import 'package:shopzo_pos/utils/app_utils.dart';
 
 import '../repo/dashbaord_repo.dart';
+import 'auth_viewmodel.dart';
 
 class DateRange {
   const DateRange(this.from, this.to);
@@ -24,12 +25,8 @@ enum DashboardPeriod {
 
   final String label;
   final String compareLabel;
-
-  /// Sparkline mein maximum kitne points.
   static const int maxTrendPoints = 8;
-
-  static DateTime _day(DateTime base, int offset) =>
-      DateTime(base.year, base.month, base.day + offset);
+  static DateTime _day(DateTime base, int offset) => DateTime(base.year, base.month, base.day + offset);
 
   DateRange current([DateTime? now]) {
     final DateTime t = _day(now ?? DateTime.now(), 0);
@@ -94,18 +91,11 @@ class DashboardState {
 
   final DashboardPeriod period;
   final DailySalesReport? report;
-
-  /// Pichhli period ka report (sirf growth % ke liye). Fail ho to null.
   final DailySalesReport? previous;
-
-  /// Sparkline ke net sales points. Report ke baad alag se aata hai,
-  /// tab tak null (chart nahi dikhta).
   final List<double>? trend;
-
   final bool isLoading;
   final Failure? failure;
 
-  /// Net sales growth in %. Compare na ho paye to null (badge nahi dikhega).
   double? get growth {
     final DailySalesReport? cur = report;
     final DailySalesReport? prev = previous;
@@ -141,6 +131,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
   @override
   DashboardState build() {
+    ref.watch(authViewModelProvider.select((AuthState s) => s.user?.id));
     Future<void>.microtask(() => load());
     return const DashboardState();
   }
@@ -152,6 +143,9 @@ class DashboardViewModel extends Notifier<DashboardState> {
   }
 
   Future<void> load({bool refresh = false}) async {
+    final AuthState auth = ref.read(authViewModelProvider);
+    if (!auth.isAuthenticated || auth.isLoading) return;
+
     final int id = ++_requestId;
     final DashboardPeriod period = state.period;
 
@@ -186,21 +180,19 @@ class DashboardViewModel extends Notifier<DashboardState> {
         clearPrevious: previous == null,
         clearFailure: true,
       );
-      // Chart baad mein bharta hai, dashboard ko rokta nahi.
       unawaited(_loadTrend(id, period));
       return;
     }
 
     final Failure failure = results[0].failureOrNull!;
+    if (!ref.read(authViewModelProvider).isAuthenticated) return;
     if (state.report != null) {
-      // Refresh fail hua par purana data hai: bubble dikhao, screen mat todo.
       AppUtils.showFailure(failure);
       state = state.copyWith(isLoading: false);
     } else {
       state = state.copyWith(isLoading: false, failure: failure);
     }
   }
-
   Future<void> _loadTrend(int id, DashboardPeriod period) async {
     final List<DateRange> buckets = period.trendBuckets();
     if (buckets.length < 2) return;
@@ -226,7 +218,4 @@ class DashboardViewModel extends Notifier<DashboardState> {
 }
 
 final NotifierProvider<DashboardViewModel, DashboardState>
-dashboardViewModelProvider =
-NotifierProvider<DashboardViewModel, DashboardState>(
-  DashboardViewModel.new,
-);
+dashboardViewModelProvider = NotifierProvider<DashboardViewModel, DashboardState>(DashboardViewModel.new,);

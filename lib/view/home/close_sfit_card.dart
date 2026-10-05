@@ -13,11 +13,6 @@ import 'package:shopzo_pos/widget/app_loader.dart';
 import 'package:shopzo_pos/widget/app_text.dart';
 import 'package:shopzo_pos/widget/app_textfield.dart';
 
-/// Dashboard ke "End shift" button se:
-///   showCloseShiftDialog(context);
-///
-/// Success par shift band hoti hai, ye dialog khud band ho jata hai aur
-/// `ShiftGate` "Shift closed" report dikhata hai (phir Open Shift popup).
 Future<void> showCloseShiftDialog(BuildContext context) {
   return showDialog<void>(
     context: context,
@@ -46,9 +41,8 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
   @override
   void initState() {
     super.initState();
-    // Is shift ki sales order history se nikalo.
     Future<void>.microtask(
-          () => ref.read(shiftViewModelProvider.notifier).loadSummary(),
+      () => ref.read(shiftViewModelProvider.notifier).loadSummary(),
     );
   }
 
@@ -68,10 +62,9 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
     final double? amount = _counted;
     if (amount == null) return;
 
-    final ApiResult<Shift> result =
-    await ref.read(shiftViewModelProvider.notifier).closeShift(amount);
-
-    // Server ka message ("Shift closed") + status code, ya error.
+    final ApiResult<Shift> result = await ref
+        .read(shiftViewModelProvider.notifier)
+        .closeShift(amount);
     AppUtils.showResult(result, successFallback: 'Shift closed');
 
     if (!mounted) return;
@@ -82,7 +75,6 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
   Widget build(BuildContext context) {
     final ShiftState s = ref.watch(shiftViewModelProvider);
     final Shift? shift = s.shift;
-    // Close hote hi shift null ho jati hai (dialog pop hone se pehle ek frame).
     if (shift == null) return const SizedBox.shrink();
 
     final ShiftSummary? summary = s.summary;
@@ -114,8 +106,6 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
                 secondary: true,
               ),
               const SizedBox(height: 18),
-
-              // Shift ka time
               ShiftInfoGroup(
                 title: 'This shift',
                 children: <Widget>[
@@ -135,8 +125,6 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
                 ],
               ),
               const SizedBox(height: 12),
-
-              // Sales: loading / data / error
               _SalesBlock(
                 state: s,
                 shift: shift,
@@ -149,12 +137,12 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
                 alignment: Alignment.topCenter,
                 child: s.failure != null
                     ? Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: ShiftErrorBanner(
-                    message: s.failure!.message,
-                    statusCode: s.failure!.statusCode,
-                  ),
-                )
+                        padding: const EdgeInsets.only(top: 14),
+                        child: ShiftErrorBanner(
+                          message: s.failure!.message,
+                          statusCode: s.failure!.statusCode,
+                        ),
+                      )
                     : const SizedBox(width: double.infinity),
               ),
               const SizedBox(height: 18),
@@ -171,25 +159,23 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
                 onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _submit(),
               ),
-
-              // Live difference (estimate). Final hisaab server batata hai.
               AnimatedSize(
                 duration: const Duration(milliseconds: 250),
                 alignment: Alignment.topCenter,
                 child: (counted != null && expected != null)
                     ? Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Column(
-                    children: <Widget>[
-                      CashDifferenceBadge(difference: counted - expected),
-                      const SizedBox(height: 6),
-                      const AppText.caption(
-                        'Estimate. The final difference is calculated by the server.',
-                        align: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Column(
+                          children: <Widget>[
+                            CashDifferenceBadge(difference: counted - expected),
+                            const SizedBox(height: 6),
+                            const AppText.caption(
+                              'Estimate. The final difference is calculated by the server.',
+                              align: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
                     : const SizedBox(width: double.infinity),
               ),
               const SizedBox(height: 20),
@@ -216,7 +202,6 @@ class _CloseShiftCardState extends ConsumerState<CloseShiftCard> {
   }
 }
 
-/// Sales ka hisaab: loading, data, ya error + Retry (error me bhi shift band ho sakti hai).
 class _SalesBlock extends StatelessWidget {
   const _SalesBlock({
     required this.state,
@@ -243,8 +228,11 @@ class _SalesBlock extends StatelessWidget {
           ),
           child: Row(
             children: <Widget>[
-              const Icon(Icons.info_outline_rounded,
-                  size: 20, color: AppColors.amber),
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 20,
+                color: AppColors.amber,
+              ),
               const SizedBox(width: 10),
               const Expanded(
                 child: AppText.body(

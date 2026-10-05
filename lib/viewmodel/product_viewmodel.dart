@@ -4,6 +4,7 @@ import 'package:shopzo_pos/core/errors/failure.dart';
 import 'package:shopzo_pos/model/product_model.dart';
 import 'package:shopzo_pos/utils/app_utils.dart';
 import '../repo/product_repo.dart';
+import 'auth_viewmodel.dart';
 
 enum ProductFilter {
   all('All'),
@@ -97,6 +98,7 @@ class ProductViewModel extends Notifier<ProductState> {
   @override
   ProductState build() {
     ref.onDispose(() => _debounce?.cancel());
+    ref.watch(authViewModelProvider.select((AuthState s) => s.user?.id));
     Future<void>.microtask(() => load());
     return const ProductState();
   }
@@ -114,6 +116,9 @@ class ProductViewModel extends Notifier<ProductState> {
   }
 
   Future<void> load({bool refresh = false}) async {
+    final AuthState auth = ref.read(authViewModelProvider);
+    if (!auth.isAuthenticated || auth.isLoading) return;
+
     final int id = ++_requestId;
     if (!refresh) {
       state = state.copyWith(
@@ -145,6 +150,7 @@ class ProductViewModel extends Notifier<ProductState> {
     }
 
     final Failure failure = result.failureOrNull!;
+    if (!ref.read(authViewModelProvider).isAuthenticated) return;
     if (state.items.isNotEmpty) {
       AppUtils.showFailure(failure);
       state = state.copyWith(isLoading: false, isLoadingMore: false);
@@ -156,7 +162,6 @@ class ProductViewModel extends Notifier<ProductState> {
       );
     }
   }
-
   Future<void> loadMore() async {
     if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
     final int id = _requestId;

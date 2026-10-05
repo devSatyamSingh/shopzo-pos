@@ -40,5 +40,6 @@ class ApiUrls {
   static const String allPermissions = '/permissions';
   static String permissionsByRole(String role) => '/permissions/role/$role';
   static const String assignPermission = '/permissions/assign';
+  static const String myPermissions = '/permissions/my';
   static const String revokePermission = '/permissions/revoke';
 }

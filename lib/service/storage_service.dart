@@ -55,9 +55,6 @@ class StorageService {
     await _secure.delete(key: StorageKeys.refreshToken);
   }
 
-  // ── Session (tokens + user) ──────────────────────────────────────────────
-
-  /// Login success pe ek saath save.
   Future<void> saveSession({
     required String accessToken,
     required String refreshToken,
