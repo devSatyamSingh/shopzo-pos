@@ -72,9 +72,7 @@ class PermissionModel {
   }
 
   String get resource => PosPermissions.resourceOf(key);
-
   bool get isPos => posFlag ?? PosPermissions.inferPos(key);
-
   String get label => PosPermissions.labelOf(key, description: description);
 }
 

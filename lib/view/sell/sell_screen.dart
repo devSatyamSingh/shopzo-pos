@@ -168,21 +168,51 @@ class _SellScreenState extends ConsumerState<SellScreen> {
       ],
     );
 
+
     return SafeArea(
       bottom: false,
-      child: tablet
-          ? Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Expanded(flex: 3, child: products),
-          VerticalDivider(width: 1, color: palette.border),
+          // AppBar / screen heading
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: AdaptiveText(
+                    'Sell',
+                    AppTextStyles.h1,
+                    m: 19,
+                    t: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Existing sell screen content
           Expanded(
-            flex: 2,
-            child: _CartPanel(onPaid: _showDone),
+            child: tablet
+                ? Row(
+              children: <Widget>[
+                Expanded(flex: 3, child: products),
+                VerticalDivider(
+                  width: 1,
+                  color: palette.border,
+                ),
+                Expanded(
+                  flex: 2,
+                  child: _CartPanel(onPaid: _showDone),
+                ),
+              ],
+            )
+                : products,
           ),
         ],
-      )
-          : products,
+      ),
     );
+
   }
 
   Widget _buildList(ProductState state, Map<String, int> inCart, bool tablet) {

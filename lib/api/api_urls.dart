@@ -1,4 +1,3 @@
-
 class ApiUrls {
   ApiUrls._();
 
@@ -34,6 +33,9 @@ class ApiUrls {
   static const String activeShift = '/pos/shifts/active';
   static const String listShifts = '/pos/shifts';
   static String closeShift(String id) => '/pos/shifts/$id/close';
+
+  // ── Coupons ──────────────────────────────────────────────────────────────
+  static const String coupons = '/coupons';
 
   // ── Reports ──────────────────────────────────────────────────────────────
   static const String dailySalesReport = '/pos/reports/sales/daily';

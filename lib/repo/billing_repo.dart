@@ -14,19 +14,22 @@ class BillingRepo {
     required List<CartItem> items,
     required List<PaymentLine> payments,
     String? customerId,
+    String? couponCode,            // 👈 NEW
     CancelToken? cancelToken,
   }) {
     return _api.post<CreatedOrder>(
-      ApiUrls.createPosOrder,
-      body: <String, dynamic>{
-        'items': <Map<String, dynamic>>[
-          for (final CartItem i in items) i.toOrderJson(),
-        ],
-        if (customerId != null) 'customerId': customerId,
-        'payments': <Map<String, dynamic>>[
-          for (final PaymentLine p in payments) p.toJson(),
-        ],
-      },
+        ApiUrls.createPosOrder,
+        body: <String, dynamic>{
+          'items': <Map<String, dynamic>>[
+            for (final CartItem i in items) i.toOrderJson(),
+          ],
+          if (customerId != null) 'customerId': customerId,
+          if (couponCode != null && couponCode.isNotEmpty)
+            'couponCode': couponCode,   // 👈 NEW
+          'payments': <Map<String, dynamic>>[
+            for (final PaymentLine p in payments) p.toJson(),
+          ],
+        },
       cancelToken: cancelToken,
       parser: (dynamic data) =>
           CreatedOrder.fromJson(Map<String, dynamic>.from(data as Map)),

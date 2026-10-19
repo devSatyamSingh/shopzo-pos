@@ -16,6 +16,7 @@ import '../model/permission_model.dart';
 import '../viewmodel/access_viewmodel.dart';
 import '../widget/app_shimmer.dart';
 import 'cms_screen.dart';
+import 'coupons_screen.dart';
 import 'logout_dialog.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -41,11 +42,18 @@ class ProfileScreen extends ConsumerWidget {
           (_) => resetSessionProviders(container),
     );
   }
+
   void _openCms(BuildContext context, String title, String slug) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CmsPage(title: title, slug: slug),
       ),
+    );
+  }
+
+  void _openCoupons(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const CouponsScreen()),
     );
   }
 
@@ -125,6 +133,15 @@ class ProfileScreen extends ConsumerWidget {
                         const _TileDivider(),
                       ],
                       _CmsTile(
+                        icon: Icons.local_offer_outlined,
+                        color: AppColors.coral,
+                        soft: AppColors.coralSoft,
+                        title: 'Coupons',
+                        subtitle: 'View available discount codes',
+                        onTap: () => _openCoupons(context),
+                      ),
+                      const _TileDivider(),
+                      _CmsTile(
                         icon: Icons.description_outlined,
                         color: AppColors.primary,
                         soft: AppColors.primarySoft,
@@ -139,7 +156,7 @@ class ProfileScreen extends ConsumerWidget {
                         color: const Color(0xFF0E9FC4),
                         soft: AppColors.skySoft,
                         title: 'About Us',
-                        subtitle: 'Know more about Pulse POS',
+                        subtitle: 'Know more about Shopzo POS',
                         onTap: () =>
                             _openCms(context, 'About Us', 'about-us'),
                       ),
@@ -166,7 +183,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Center(
-                  child: AppText.caption('Pulse POS • v1.0.0'),
+                  child: AppText.caption('Shopzo POS • v1.0.0'),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -375,7 +392,7 @@ class _PermissionsWrap extends ConsumerWidget {
                     Icon(Icons.check_circle_rounded,
                         size: m ? 14 : 16, color: tone),
                     const SizedBox(width: 6),
-                AppText.body(p.label, color: tone),
+                    AppText.body(p.label, color: tone),
                   ],
                 ),
               ),
@@ -398,6 +415,7 @@ class _PermissionsWrap extends ConsumerWidget {
     );
   }
 }
+
 class _CmsTile extends StatelessWidget {
   const _CmsTile({
     required this.icon,

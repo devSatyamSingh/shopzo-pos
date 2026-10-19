@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopzo_pos/core/errors/failure.dart';
 import 'package:shopzo_pos/model/billing_model.dart';
+import 'package:shopzo_pos/model/coupon_model.dart';
 import 'package:shopzo_pos/model/customer_model.dart';
 import 'package:shopzo_pos/utils/app_utils.dart';
 import 'package:shopzo_pos/utils/format_utils.dart';
@@ -16,6 +17,7 @@ import 'package:shopzo_pos/widget/app_colors.dart';
 import 'package:shopzo_pos/widget/app_dimens.dart';
 import 'package:shopzo_pos/widget/app_textstyle.dart';
 
+import '../../repo/coupon_repo.dart';
 import '../../viewmodel/held_viewmodel.dart';
 import '../held/held_screen.dart';
 
@@ -50,10 +52,18 @@ class _PaymentSheet extends ConsumerStatefulWidget {
 
 class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
   // Sheet khulte waqt ki values (order success par cart saaf hota hai).
-  late final double _total = ref.read(billingViewModelProvider).subtotal;
+  late final double _subtotal = ref.read(billingViewModelProvider).subtotal;
   late final int _itemCount = ref.read(billingViewModelProvider).itemCount;
   late final CustomerModel? _customer =
       ref.read(billingViewModelProvider).customer;
+
+  // Coupon lagne ke baad payable total = subtotal - discount.
+  CouponModel? _applied;
+  double _discount = 0;
+  bool _applying = false;
+  String? _couponError;
+
+  double get _total => _round2(_subtotal - _discount);
 
   _Mode _mode = _Mode.cash;
   Failure? _error;
@@ -63,6 +73,7 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
   final TextEditingController _sCash = TextEditingController();
   final TextEditingController _sUpi = TextEditingController();
   final TextEditingController _sCard = TextEditingController();
+  final TextEditingController _coupon = TextEditingController();
 
   @override
   void dispose() {
@@ -70,11 +81,116 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
     _sCash.dispose();
     _sUpi.dispose();
     _sCard.dispose();
+    _coupon.dispose();
     super.dispose();
   }
 
   double _val(TextEditingController c) =>
       double.tryParse(c.text.replaceAll(',', '').trim()) ?? 0;
+
+  // ── Coupon ───────────────────────────────────────────────────────────────
+
+  /// Total badalne par purane amounts galat ho jaate hain, isliye saaf karo.
+  void _resetAmounts() {
+    _received.clear();
+    _sCash.clear();
+    _sUpi.clear();
+    _sCard.clear();
+  }
+
+  double _discountFor(CouponModel c) {
+    final double raw = c.isPercentage
+        ? _round2(_subtotal * c.value / 100)
+        : c.value;
+    return _round2(math.min(raw, _subtotal));
+  }
+
+  /// null = coupon theek hai, warna error message.
+  String? _validateCoupon(CouponModel c) {
+    switch (c.status) {
+      case CouponStatus.inactive:
+        return 'This coupon is not active.';
+      case CouponStatus.expired:
+        return 'This coupon has expired.';
+      case CouponStatus.usedUp:
+        return 'This coupon has reached its usage limit.';
+      case CouponStatus.active:
+        break;
+    }
+    if (_subtotal < c.minOrderValue - 0.005) {
+      return 'Minimum order ${FormatUtils.inr(c.minOrderValue)} is required for this coupon.';
+    }
+    return null;
+  }
+
+  Future<void> _applyCoupon() async {
+    AppUtils.hideKeyboard();
+    final String code = _coupon.text.trim().toUpperCase();
+
+    if (code.isEmpty) {
+      setState(() => _couponError = 'Enter a coupon code.');
+      return;
+    }
+    // Backend coupon ke saath customer maangta hai.
+    if (_customer == null) {
+      setState(() => _couponError = 'Select a customer first to use a coupon.');
+      return;
+    }
+
+    setState(() {
+      _applying = true;
+      _couponError = null;
+      _error = null;
+    });
+
+    final ApiResult<List<CouponModel>> result =
+    await ref.read(couponRepositoryProvider).getCoupons();
+    if (!mounted) return;
+
+    final List<CouponModel>? list = result.dataOrNull;
+    if (list == null) {
+      setState(() => _applying = false);
+      final Failure? f = result.failureOrNull;
+      if (f != null) AppUtils.showFailure(f);
+      return;
+    }
+
+    final CouponModel? found =
+        list.where((CouponModel c) => c.code == code).firstOrNull;
+    final String? problem =
+    found == null ? 'Invalid coupon code.' : _validateCoupon(found);
+
+    if (found == null || problem != null) {
+      setState(() {
+        _applying = false;
+        _couponError = problem;
+      });
+      return;
+    }
+
+    final double discount = _discountFor(found);
+    setState(() {
+      _applying = false;
+      _applied = found;
+      _discount = discount;
+      _resetAmounts();
+    });
+
+    AppUtils.showSuccess(
+      'Coupon ${found.code} applied. You save ${FormatUtils.inr(discount, decimals: true)}.',
+    );
+  }
+
+  void _removeCoupon() {
+    setState(() {
+      _applied = null;
+      _discount = 0;
+      _couponError = null;
+      _error = null;
+      _coupon.clear();
+      _resetAmounts();
+    });
+  }
 
   // ── Split auto-adjust ────────────────────────────────────────────────────
 
@@ -144,8 +260,9 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
     if (!_canConfirm) return;
 
     setState(() => _error = null);
-    final ApiResult<CreatedOrder> result =
-    await ref.read(billingViewModelProvider.notifier).placeOrder(_buildLines());
+    final ApiResult<CreatedOrder> result = await ref
+        .read(billingViewModelProvider.notifier)
+        .placeOrder(_buildLines(), couponCode: _applied?.code);
     if (!mounted) return;
 
     // Server ka message ("Order created") + status code (201), ya error.
@@ -158,7 +275,6 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
       setState(() => _error = result.failureOrNull);
     }
   }
-
 
   Future<void> _hold() async {
     AppUtils.hideKeyboard();
@@ -239,9 +355,17 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                   total: _total,
                   itemCount: _itemCount,
                   customer: _customer,
+                  note: _applied == null
+                      ? null
+                      : '${FormatUtils.inr(_subtotal, decimals: true)} − ${FormatUtils.inr(_discount, decimals: true)} (${_applied!.code})',
                 ),
+                const SizedBox(height: 14),
+                _couponSection(busy),
                 const SizedBox(height: 16),
-                _MethodSelector(mode: _mode, onChanged: busy ? null : _setMode),
+                _MethodSelector(
+                  mode: _mode,
+                  onChanged: (busy || _applying) ? null : _setMode,
+                ),
                 const SizedBox(height: 16),
                 AnimatedSize(
                   duration: const Duration(milliseconds: 220),
@@ -266,7 +390,8 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                   label: 'Confirm payment ${FormatUtils.inr(_total)}',
                   leadingIcon: Icons.check_circle_outline_rounded,
                   isLoading: busy,
-                  onPressed: (_canConfirm && !_holding) ? _confirm : null,
+                  onPressed:
+                  (_canConfirm && !_holding && !_applying) ? _confirm : null,
                 ),
                 const SizedBox(height: 4),
                 AppButton(
@@ -275,13 +400,65 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                   variant: AppButtonVariant.tonal,
                   size: AppButtonSize.medium,
                   isLoading: _holding,
-                  onPressed: busy ? null : _hold,
+                  onPressed: (busy || _applying) ? null : _hold,
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  // ── Coupon UI ────────────────────────────────────────────────────────────
+
+  Widget _couponSection(bool busy) {
+    final CouponModel? applied = _applied;
+
+    if (applied != null) {
+      return _AppliedCoupon(
+        code: applied.code,
+        saving: _discount,
+        onRemove: busy ? null : _removeCoupon,
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: PosField(
+            controller: _coupon,
+            label: 'Coupon code (optional)',
+            hint: 'e.g. SAVE10',
+            icon: Icons.local_offer_outlined,
+            enabled: !busy && !_applying,
+            textInputAction: TextInputAction.done,
+            errorText: _couponError,
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9_-]')),
+              LengthLimitingTextInputFormatter(30),
+              TextInputFormatter.withFunction(
+                    (TextEditingValue old, TextEditingValue next) =>
+                    next.copyWith(text: next.text.toUpperCase()),
+              ),
+            ],
+            onChanged: (_) {
+              if (_couponError != null) setState(() => _couponError = null);
+            },
+            onSubmitted: (_) => _applyCoupon(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 100,
+          child: AppButton(
+            label: 'Apply',
+            isLoading: _applying,
+            onPressed: busy ? null : _applyCoupon,
+          ),
+        ),
+      ],
     );
   }
 
@@ -423,11 +600,15 @@ class _TotalCard extends StatelessWidget {
     required this.total,
     required this.itemCount,
     required this.customer,
+    this.note,
   });
 
   final double total;
   final int itemCount;
   final CustomerModel? customer;
+
+  /// Coupon laga ho to "₹599 − ₹59.90 (SAVE10)" jaisi line.
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -459,6 +640,17 @@ class _TotalCard extends StatelessWidget {
                     tabular: true,
                   ),
                 ),
+                if (note != null) ...<Widget>[
+                  const SizedBox(height: 2),
+                  AdaptiveText(
+                    note!,
+                    AppTextStyles.caption,
+                    m: 11,
+                    t: 12,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    maxLines: 1,
+                  ),
+                ],
               ],
             ),
           ),
@@ -477,6 +669,59 @@ class _TotalCard extends StatelessWidget {
                 maxLines: 1,
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AppliedCoupon extends StatelessWidget {
+  const _AppliedCoupon({
+    required this.code,
+    required this.saving,
+    required this.onRemove,
+  });
+
+  final String code;
+  final double saving;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette palette = context.palette;
+    final bool dark = palette.isDark;
+    final Color tone = dark ? AppColors.mint : AppColors.mintDark;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: dark ? AppColors.mint.withAlpha(36) : AppColors.mintSoft,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.local_offer_rounded, size: 20, color: tone),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '$code applied',
+                  style: AppTextStyles.bodyBold.copyWith(color: tone, fontSize: 13),
+                ),
+                Text(
+                  'You save ${FormatUtils.inr(saving, decimals: true)}',
+                  style: AppTextStyles.caption.copyWith(color: tone, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove coupon',
+            onPressed: onRemove,
+            icon: Icon(Icons.close_rounded, color: palette.textSecondary),
           ),
         ],
       ),

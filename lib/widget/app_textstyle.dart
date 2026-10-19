@@ -32,7 +32,7 @@ class AppTextStyles {
   static TextStyle get h1 =>
       _style(18, FontWeight.w600, height: 1.25, letterSpacing: -0.3);
 
-  static TextStyle get h2 => _style(18, FontWeight.w700, height: 1.3);
+  static TextStyle get h2 => _style(17, FontWeight.w600, height: 1.3);
 
   static TextStyle get title => _style(16, FontWeight.w600, height: 1.4);
 
@@ -40,7 +40,7 @@ class AppTextStyles {
 
   static TextStyle get body => _style(12, FontWeight.w500, height: 1.5);
 
-  static TextStyle get bodyBold => _style(14, FontWeight.w700, height: 1.5);
+  static TextStyle get bodyBold => _style(14, FontWeight.w600, height: 1.5);
 
   static TextStyle get caption => _style(12, FontWeight.w500, height: 1.4);
 

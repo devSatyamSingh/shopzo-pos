@@ -320,7 +320,7 @@ class _FilterChips extends StatelessWidget {
                     color:
                     f == selected ? Colors.white : palette.textSecondary,
                     fontWeight:
-                    f == selected ? FontWeight.w700 : FontWeight.w500,
+                    f == selected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),

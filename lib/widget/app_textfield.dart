@@ -378,7 +378,7 @@ class _RupeeSign extends StatelessWidget {
       '₹',
       style: AppTextStyles.title.copyWith(
         color: palette.textPrimary,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
       ),
     );
   }

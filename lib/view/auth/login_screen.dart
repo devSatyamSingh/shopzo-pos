@@ -422,7 +422,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       text: 'Contact your admin',
                       style: AppTextStyles.caption.copyWith(
                         color: palette.textPrimary,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -801,7 +801,7 @@ class _BrandPanel extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   Text(
-                                    'Pulse POS',
+                                    'Shopzo POS',
                                     style: AppTextStyles.h2.copyWith(
                                       color: Colors.white,
                                     ),

@@ -447,7 +447,7 @@ class _MessageBubbleState extends State<_MessageBubble>
                                   '${widget.statusCode}',
                                   style: textTheme.labelMedium?.copyWith(
                                     color: style.color,
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),

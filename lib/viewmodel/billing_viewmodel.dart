@@ -125,7 +125,10 @@ class BillingViewModel extends Notifier<BillingState> {
 
   void reset() => state = const BillingState();
 
-  Future<ApiResult<CreatedOrder>> placeOrder(List<PaymentLine> payments) async {
+  Future<ApiResult<CreatedOrder>> placeOrder(
+      List<PaymentLine> payments, {
+        String? couponCode,            // 👈 NEW
+      }) async {
     if (state.isPlacing) {
       return const ApiFailure<CreatedOrder>(
         Failure(message: 'Please wait, the order is being placed.'),
@@ -143,6 +146,7 @@ class BillingViewModel extends Notifier<BillingState> {
       items: state.cart,
       payments: payments,
       customerId: state.customer?.id,
+      couponCode: couponCode,        // 👈 NEW
     );
 
     if (!ref.mounted) return result;
