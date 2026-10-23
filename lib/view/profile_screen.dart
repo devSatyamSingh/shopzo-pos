@@ -12,11 +12,13 @@ import 'package:shopzo_pos/widget/app_text.dart';
 
 import '../core/constants/session_reset.dart';
 import '../core/routes/route_name.dart';
+import '../model/cms_model.dart';
 import '../model/permission_model.dart';
 import '../viewmodel/access_viewmodel.dart';
 import '../widget/app_shimmer.dart';
 import 'cms_screen.dart';
 import 'coupons_screen.dart';
+import 'exchange_screen.dart';
 import 'logout_dialog.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -43,11 +45,9 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _openCms(BuildContext context, String title, String slug) {
+  void _openCms(BuildContext context, CmsPageType type) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CmsPage(title: title, slug: slug),
-      ),
+      MaterialPageRoute<void>(builder: (_) => CmsPage(type: type)),
     );
   }
 
@@ -57,18 +57,20 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  void _openExchange(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const ExchangeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppPalette palette = context.palette;
     final bool m = context.isMobile;
     final UserModel? user = ref.watch(currentUserProvider);
     final double gap = m ? 12 : 16;
-
-    final String name = (user?.name.trim().isNotEmpty ?? false)
-        ? user!.name.trim()
-        : 'User';
-    final String role = (user?.roleName.trim().isNotEmpty ?? false)
-        ? user!.roleName.trim().toUpperCase()
+    final String name = (user?.name.trim().isNotEmpty ?? false) ? user!.name.trim() : 'User';
+    final String role = (user?.roleName.trim().isNotEmpty ?? false) ? user!.roleName.trim().toUpperCase()
         : 'USER';
 
     return Scaffold(
@@ -133,6 +135,15 @@ class ProfileScreen extends ConsumerWidget {
                         const _TileDivider(),
                       ],
                       _CmsTile(
+                        icon: Icons.swap_horiz_rounded,
+                        color: AppColors.primaryLight,
+                        soft: AppColors.primarySoft,
+                        title: 'Exchange',
+                        subtitle: 'Swap an item from a past order',
+                        onTap: () => _openExchange(context),
+                      ),
+                      const _TileDivider(),
+                      _CmsTile(
                         icon: Icons.local_offer_outlined,
                         color: AppColors.coral,
                         soft: AppColors.coralSoft,
@@ -140,15 +151,22 @@ class ProfileScreen extends ConsumerWidget {
                         subtitle: 'View available discount codes',
                         onTap: () => _openCoupons(context),
                       ),
-                      const _TileDivider(),
                       _CmsTile(
                         icon: Icons.description_outlined,
                         color: AppColors.primary,
                         soft: AppColors.primarySoft,
                         title: 'Terms & Conditions',
                         subtitle: 'Usage rules and policies',
-                        onTap: () => _openCms(
-                            context, 'Terms & Conditions', 'terms-and-conditions'),
+                        onTap: () => _openCms(context, CmsPageType.termsAndConditions),
+                      ),
+                      const _TileDivider(),
+                      _CmsTile(
+                        icon: Icons.privacy_tip_outlined,
+                        color: AppColors.mintDark,
+                        soft: AppColors.mintSoft,
+                        title: 'Privacy Policy',
+                        subtitle: 'How we handle your data',
+                        onTap: () => _openCms(context, CmsPageType.privacyPolicy),
                       ),
                       const _TileDivider(),
                       _CmsTile(
@@ -156,25 +174,13 @@ class ProfileScreen extends ConsumerWidget {
                         color: const Color(0xFF0E9FC4),
                         soft: AppColors.skySoft,
                         title: 'About Us',
-                        subtitle: 'Know more about Shopzo POS',
-                        onTap: () =>
-                            _openCms(context, 'About Us', 'about-us'),
-                      ),
-                      const _TileDivider(),
-                      _CmsTile(
-                        icon: Icons.headset_mic_outlined,
-                        color: const Color(0xFFE08A00),
-                        soft: AppColors.amberSoft,
-                        title: 'Help & Support',
-                        subtitle: 'Get help, contact our team',
-                        onTap: () => _openCms(
-                            context, 'Help & Support', 'help-and-support'),
+                        subtitle: 'Know more about FounderCodeMart POS',
+                        onTap: () => _openCms(context, CmsPageType.aboutUs),
                       ),
                     ],
                   ),
                 ),
                 SizedBox(height: m ? 20 : 28),
-
                 AppButton(
                   label: 'Logout',
                   variant: AppButtonVariant.danger,
@@ -183,7 +189,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Center(
-                  child: AppText.caption('Shopzo POS • v1.0.0'),
+                  child: AppText.caption('FounderCodeMart POS • v1.0.0'),
                 ),
                 const SizedBox(height: 24),
               ],

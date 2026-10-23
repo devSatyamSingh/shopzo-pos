@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'Shopzo POS';
+  static const String appName = 'FounderCodeMart Pos';
   static const Duration connectTimeout = Duration(seconds: 20);
   static const Duration sendTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

@@ -21,6 +21,10 @@ class ApiUrls {
   static const String posOrderHistory = '/orders/pos/history';
   static String orderReceipt(String orderId) => '/orders/$orderId/receipt';
 
+  // ── POS: exchange ────────────────────────────────────────────────────────
+  static const String exchangePreview = '/orders/pos/exchange/preview';
+  static const String createExchange = '/orders/pos/exchange';
+
   // ── POS: held orders ─────────────────────────────────────────────────────
   static const String holdOrder = '/pos/held-orders';
   static const String heldOrders = '/pos/held-orders';
@@ -44,4 +48,8 @@ class ApiUrls {
   static const String assignPermission = '/permissions/assign';
   static const String myPermissions = '/permissions/my';
   static const String revokePermission = '/permissions/revoke';
+
+  // ── CMS pages ────────────────────────────────────────────────────────────
+  static const String posPages = '/pos-pages';
+  static String posPageByType(String type) => '/pos-pages/$type';
 }

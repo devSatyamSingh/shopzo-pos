@@ -14,7 +14,7 @@ class BillingRepo {
     required List<CartItem> items,
     required List<PaymentLine> payments,
     String? customerId,
-    String? couponCode,            // 👈 NEW
+    String? couponCode,            // NEW
     CancelToken? cancelToken,
   }) {
     return _api.post<CreatedOrder>(
@@ -25,7 +25,7 @@ class BillingRepo {
           ],
           if (customerId != null) 'customerId': customerId,
           if (couponCode != null && couponCode.isNotEmpty)
-            'couponCode': couponCode,   // 👈 NEW
+            'couponCode': couponCode,   // NEW
           'payments': <Map<String, dynamic>>[
             for (final PaymentLine p in payments) p.toJson(),
           ],

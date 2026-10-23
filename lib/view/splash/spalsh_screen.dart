@@ -260,7 +260,7 @@ class _BrandBlock extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text('Shopzo ', style: titleStyle.copyWith(color: Colors.white)),
+                Text('FounderCodeMart ', style: titleStyle.copyWith(color: Colors.white)),
                 ShaderMask(
                   blendMode: BlendMode.srcIn,
                   shaderCallback: (Rect bounds) => const LinearGradient(
@@ -327,7 +327,7 @@ class _Logo extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(size * 0.28 - 1.6),
         child: Image.asset(
-          'assets/icons/shopzolo.png',
+          'assets/icons/tree_bg.png',
           width: size,
           height: size,
           fit: BoxFit.cover,

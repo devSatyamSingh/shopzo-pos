@@ -154,12 +154,8 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
       if (f != null) AppUtils.showFailure(f);
       return;
     }
-
-    final CouponModel? found =
-        list.where((CouponModel c) => c.code == code).firstOrNull;
-    final String? problem =
-    found == null ? 'Invalid coupon code.' : _validateCoupon(found);
-
+    final CouponModel? found = list.where((CouponModel c) => c.code == code).firstOrNull;
+    final String? problem = found == null ? 'Invalid coupon code.' : _validateCoupon(found);
     if (found == null || problem != null) {
       setState(() {
         _applying = false;
@@ -167,7 +163,6 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
       });
       return;
     }
-
     final double discount = _discountFor(found);
     setState(() {
       _applying = false;
@@ -175,7 +170,6 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
       _discount = discount;
       _resetAmounts();
     });
-
     AppUtils.showSuccess(
       'Coupon ${found.code} applied. You save ${FormatUtils.inr(discount, decimals: true)}.',
     );
@@ -192,10 +186,6 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
     });
   }
 
-  // ── Split auto-adjust ────────────────────────────────────────────────────
-
-  /// Jo field user ne badli use chhod kar baaki ka balance dusre field me daalta hai:
-  /// cash badla -> UPI adjust, UPI badla -> cash adjust, card badla -> UPI adjust.
   void _onSplitChanged(String field) {
     final double cash = _val(_sCash);
     final double upi = _val(_sUpi);

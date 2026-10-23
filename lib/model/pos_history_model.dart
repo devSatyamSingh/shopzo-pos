@@ -95,6 +95,38 @@ class OrderPayment {
   }
 }
 
+/// Order ki ek line. [id] hi exchange API ka `orderItemId` hai.
+class OrderLine {
+  const OrderLine({
+    required this.id,
+    required this.productName,
+    required this.quantity,
+    required this.returnedQty,
+  });
+
+  final String id;
+  final String productName;
+  final int quantity;
+  final int returnedQty;
+
+  /// Kitni quantity ab bhi exchange / return ho sakti hai.
+  int get remaining {
+    final int r = quantity - returnedQty;
+    return r < 0 ? 0 : r;
+  }
+
+  bool get canExchange => remaining > 0;
+
+  factory OrderLine.fromJson(Map<String, dynamic> json) {
+    return OrderLine(
+      id: _str(json['id']) ?? '',
+      productName: _str(json['productName']) ?? 'Item',
+      quantity: _double(json['quantity']).toInt(),
+      returnedQty: _double(json['returnedQty']).toInt(),
+    );
+  }
+}
+
 class PosOrder {
   const PosOrder({
     required this.id,
@@ -106,6 +138,7 @@ class PosOrder {
     required this.itemCount,
     required this.payments,
     required this.total,
+    this.items = const <OrderLine>[],
     this.createdAt,
   });
 
@@ -118,9 +151,15 @@ class PosOrder {
   final int itemCount;
   final List<OrderPayment> payments;
   final double total;
+  final List<OrderLine> items;
   final DateTime? createdAt;
 
   bool get isSplit => payments.length > 1;
+
+  /// Completed order me kam se kam ek line exchange ke layak ho.
+  bool get canExchange =>
+      status == OrderStatus.completed &&
+          items.any((OrderLine i) => i.canExchange);
 
   PayMethod? get primaryMethod => payments.isEmpty ? null : payments.first.method;
 
@@ -148,6 +187,15 @@ class PosOrder {
         .toList()
         : const <OrderPayment>[];
 
+    final dynamic rawItems = json['items'];
+    final List<OrderLine> items = rawItems is List
+        ? rawItems
+        .whereType<Map<dynamic, dynamic>>()
+        .map((Map<dynamic, dynamic> m) =>
+        OrderLine.fromJson(Map<String, dynamic>.from(m)))
+        .toList()
+        : const <OrderLine>[];
+
     final String statusName = _str(json['status']) ?? '';
 
     return PosOrder(
@@ -160,6 +208,7 @@ class PosOrder {
       itemCount: _double(json['itemCount']).toInt(),
       payments: payments,
       total: _double(json['total']),
+      items: items,
       createdAt: DateTime.tryParse(_str(json['createdAt']) ?? ''),
     );
   }

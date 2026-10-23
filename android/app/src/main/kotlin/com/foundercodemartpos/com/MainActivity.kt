@@ -1,4 +1,4 @@
-package com.example.shopzo_pos
+package com.foundercodemartpos.app
 
 import io.flutter.embedding.android.FlutterActivity
 
